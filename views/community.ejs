@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= community.displayName %> - G24Sec</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/community.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/theme.js"></script>
+</head>
+<body class="light-mode">
+    <%- include('partials/navbar') %>
+
+    <div class="main-container">
+        <div class="community-header">
+            <% if (community.banner) { %>
+                <div class="community-banner" style="background-image: url('<%= community.banner %>')"></div>
+            <% } else { %>
+                <div class="community-banner default-banner"></div>
+            <% } %>
+            
+            <div class="community-info">
+                <div class="community-icon-container">
+                    <% if (community.icon) { %>
+                        <img src="<%= community.icon %>" alt="<%= community.displayName %>" class="community-icon">
+                    <% } else { %>
+                        <div class="community-icon-placeholder">
+                            <%= community.displayName.charAt(0).toUpperCase() %>
+                        </div>
+                    <% } %>
+                </div>
+                
+                <div class="community-details">
+                    <h1><%= community.displayName %></h1>
+                    <p class="community-name">c/<%= community.name %></p>
+                    <div class="community-meta">
+                        <span><i class="fas fa-users"></i> <%= memberCount %> members</span>
+                        <% if (community.isPrivate) { %>
+                            <span><i class="fas fa-lock"></i> Private</span>
+                        <% } else { %>
+                            <span><i class="fas fa-globe"></i> Public</span>
+                        <% } %>
+                        <span><i class="fas fa-calendar"></i> Created <%= new Date(community.createdAt).toLocaleDateString() %></span>
+                    </div>
+                </div>
+                
+                <div class="community-actions">
+                    <% if (userMembership) { %>
+                        <button id="leave-community-btn" class="btn secondary-btn" data-community-id="<%= community.id %>">Leave</button>
+                        <% if (userMembership.role === 'admin' || user.id === community.creatorId) { %>
+                            <button id="edit-community-btn" class="btn primary-btn">Edit Community</button>
+                        <% } %>
+                    <% } else { %>
+                        <button id="join-community-btn" class="btn primary-btn" data-community-id="<%= community.id %>">Join</button>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+        
+        <div class="community-content">
+            <div class="community-sidebar">
+                <div class="sidebar-section">
+                    <h3>About Community</h3>
+                    <p><%= community.description || 'No description available' %></p>
+                </div>
+                
+                <% if (community.rules) { %>
+                <div class="sidebar-section">
+                    <h3>Rules</h3>
+                    <div class="community-rules">
+                        <%= community.rules %>
+                    </div>
+                </div>
+                <% } %>
+                
+                <div class="sidebar-section">
+                    <h3>Moderators</h3>
+                    <div class="community-moderators">
+                        <div class="moderator">
+                            <img src="<%= community.creator.profilePic || '/images/default.png' %>" alt="<%= community.creator.username %>">
+                            <a href="/profile/<%= community.creator.username %>"><%= community.creator.username %></a>
+                            <span class="mod-badge">Creator</span>
+                        </div>
+                        <!-- Other moderators would be listed here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="community-posts">
+                <div class="create-post-container">
+                    <% if (userMembership || !community.isPrivate) { %>
+                        <a href="/feed/create" class="create-post-btn" id="create-post-btn" data-community-id="<%= community.id %>">
+                            <i class="fas fa-plus"></i> Create Post
+                        </a>
+                    <% } else { %>
+                        <div class="join-to-post">
+                            <p>Join this community to post</p>
+                            <button id="join-to-post-btn" class="btn primary-btn" data-community-id="<%= community.id %>">Join Community</button>
+                        </div>
+                    <% } %>
+                </div>
+                
+                <div class="posts-list">
+                    <% if (posts && posts.length > 0) { %>
+                        <% posts.forEach(post => { %>
+                            <div class="post-card" id="post-<%= post.id %>">
+                                <div class="post-header">
+                                    <img src="<%= post.User.profilePic || '/images/default.png' %>" alt="<%= post.User.username %>" class="post-avatar">
+                                    <div class="post-meta">
+                                        <a href="/profile/<%= post.User.username %>" class="post-author"><%= post.User.username %></a>
+                                        <span class="post-time"><%= new Date(post.createdAt).toLocaleString() %></span>
+                                    </div>
+                                </div>
+                                
+                                <div class="post-content">
+                                    <h3 class="post-title"><%= post.title %></h3>
+                                    <p class="post-text"><%= post.content %></p>
+                                    
+                                    <% if (post.mediaUrl) { %>
+                                        <% if (post.mediaType === 'image') { %>
+                                            <img src="<%= post.mediaUrl %>" alt="Post image" class="post-image">
+                                        <% } else if (post.mediaType === 'pdf') { %>
+                                            <a href="<%= post.mediaUrl %>" target="_blank" class="post-attachment">
+                                                <i class="fas fa-file-pdf"></i> View PDF
+                                            </a>
+                                        <% } %>
+                                    <% } %>
+                                </div>
+                                
+                                <div class="post-actions">
+                                    <button class="like-btn" data-post-id="<%= post.id %>">
+                                        <i class="far fa-heart"></i> <span class="like-count"><%= post.likeCount || 0 %></span>
+                                    </button>
+                                    <button class="comment-btn" data-post-id="<%= post.id %>">
+                                        <i class="far fa-comment"></i> <span class="comment-count"><%= post.Comments ? post.Comments.length : 0 %></span>
+                                    </button>
+                                    
+                                    <% if (post.userId === user.id) { %>
+                                        <div class="post-owner-actions">
+                                            <a href="/feed/edit/<%= post.id %>" class="edit-post-btn">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                            <button class="delete-post-btn" data-post-id="<%= post.id %>">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                        <% }) %>
+                    <% } else { %>
+                        <div class="no-posts">
+                            <p>No posts in this community yet. Be the first to post!</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Community Modal -->
+    <% if (userMembership && (userMembership.role === 'admin' || user.id === community.creatorId)) { %>
+    <div id="edit-community-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Edit Community</h2>
+            <form id="edit-community-form">
+                <div class="form-group">
+                    <label for="displayName">Display Name</label>
+                    <input type="text" id="displayName" name="displayName" value="<%= community.displayName %>" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="3"><%= community.description || '' %></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="rules">Community Rules</label>
+                    <textarea id="rules" name="rules" rows="3"><%= community.rules || '' %></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="isPrivate">Privacy</label>
+                    <select id="isPrivate" name="isPrivate">
+                        <option value="false" <%= !community.isPrivate ? 'selected' : '' %>>Public - Anyone can view and join</option>
+                        <option value="true" <%= community.isPrivate ? 'selected' : '' %>>Private - Only members can view posts</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn primary-btn">Save Changes</button>
+            </form>
+        </div>
+    </div>
+    <% } %>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const socket = io({ withCredentials: true });
+            
+            // Join/Leave Community
+            const joinBtn = document.getElementById('join-community-btn');
+            const leaveBtn = document.getElementById('leave-community-btn');
+            const joinToPostBtn = document.getElementById('join-to-post-btn');
+            
+            if (joinBtn) {
+                joinBtn.addEventListener('click', async function() {
+                    const communityId = this.dataset.communityId;
+                    try {
+                        const response = await fetch(`/communities/${communityId}/join`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            window.location.reload();
+                        } else {
+                            const data = await response.json();
+                            alert(`Error: ${data.message}`);
+                        }
+                    } catch (error) {
+                        console.error('Error joining community:', error);
+                        alert('An error occurred while joining the community.');
+                    }
+                });
+            }
+            
+            if (leaveBtn) {
+                leaveBtn.addEventListener('click', async function() {
+                    if (confirm('Are you sure you want to leave this community?')) {
+                        const communityId = this.dataset.communityId;
+                        try {
+                            const response = await fetch(`/communities/${communityId}/leave`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            if (response.ok) {
+                                window.location.reload();
+                            } else {
+                                const data = await response.json();
+                                alert(`Error: ${data.message}`);
+                            }
+                        } catch (error) {
+                            console.error('Error leaving community:', error);
+                            alert('An error occurred while leaving the community.');
+                        }
+                    }
+                });
+            }
+            
+            if (joinToPostBtn) {
+                joinToPostBtn.addEventListener('click', async function() {
+                    const communityId = this.dataset.communityId;
+                    try {
+                        const response = await fetch(`/communities/${communityId}/join`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            window.location.reload();
+                        } else {
+                            const data = await response.json();
+                            alert(`Error: ${data.message}`);
+                        }
+                    } catch (error) {
+                        console.error('Error joining community:', error);
+                        alert('An error occurred while joining the community.');
+                    }
+                });
+            }
+            
+            // Edit Community Modal
+            const editBtn = document.getElementById('edit-community-btn');
+            const editModal = document.getElementById('edit-community-modal');
+            
+            if (editBtn && editModal) {
+                const closeBtn = editModal.querySelector('.close');
+                const editForm = document.getElementById('edit-community-form');
+                
+                editBtn.onclick = function() {
+                    editModal.style.display = 'block';
+                }
+                
+                closeBtn.onclick = function() {
+                    editModal.style.display = 'none';
+                }
+                
+                window.onclick = function(event) {
+                    if (event.target === editModal) {
+                        editModal.style.display = 'none';
+                    }
+                }
+                
+                editForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const formData = {
+                        displayName: document.getElementById('displayName').value,
+                        description: document.getElementById('description').value,
+                        rules: document.getElementById('rules').value,
+                        isPrivate: document.getElementById('isPrivate').value
+                    };
+                    
+                    try {
+                        const response = await fetch(`/communities/<%= community.id %>`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(formData)
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (response.ok) {
+                            alert('Community updated successfully!');
+                            window.location.reload();
+                        } else {
+                            alert(`Error: ${result.message}`);
+                        }
+                    } catch (error) {
+                        console.error('Error updating community:', error);
+                        alert('An error occurred while updating the community.');
+                    }
+                });
+            }
+            
+            // Create Post
+            const createPostBtn = document.getElementById('create-post-btn');
+            if (createPostBtn) {
+                createPostBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const communityId = this.dataset.communityId;
+                    window.location.href = `/feed/create?communityId=${communityId}`;
+                });
+            }
+            
+            // Like Posts
+            document.querySelectorAll('.like-btn').forEach(button => {
+                button.addEventListener('click', async function() {
+                    const postId = this.dataset.postId;
+                    try {
+                        socket.emit('likePost', postId);
+                    } catch (error) {
+                        console.error('Error liking post:', error);
+                    }
+                });
+            });
+            
+            // Delete Posts
+            document.querySelectorAll('.delete-post-btn').forEach(button => {
+                button.addEventListener('click', async function() {
+                    if (confirm('Are you sure you want to delete this post?')) {
+                        const postId = this.dataset.postId;
+                        try {
+                            const response = await fetch(`/feed/delete/${postId}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            if (response.ok) {
+                                document.getElementById(`post-${postId}`).remove();
+                            } else {
+                                const data = await response.json();
+                                alert(`Error: ${data.message}`);
+                            }
+                        } catch (error) {
+                            console.error('Error deleting post:', error);
+                            alert('An error occurred while deleting the post.');
+                        }
+                    }
+                });
+            });
+            
+            // Socket events
+            socket.on('newLike', data => {
+                const likeBtn = document.querySelector(`.like-btn[data-post-id="${data.postId}"]`);
+                if (likeBtn) {
+                    const likeCount = likeBtn.querySelector('.like-count');
+                    likeCount.textContent = data.likeCount;
+                }
+            });
+            
+            socket.on('postDeleted', postId => {
+                const postElement = document.getElementById(`post-${postId}`);
+                if (postElement) {
+                    postElement.remove();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

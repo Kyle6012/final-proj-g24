@@ -1,0 +1,39 @@
+# Database Configuration
+DB_NAME=g24sec
+DB_USER=root
+DB_PASSWORD=Perseus.2025
+DB_HOST=localhost
+DB_PORT=5432
+
+# Security
+SESSION_SECRET=your_session_secret_here
+JWT_SECRET=your_jwt_secret_here
+
+# OAuth Configuration
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
+
+# ImageKit Configuration
+IMAGEKIT_PUBLIC_KEY=your_imagekit_public_key
+IMAGEKIT_PRIVATE_KEY=your_imagekit_private_key
+IMAGEKIT_URL_ENDPOINT=your_imagekit_url_endpoint
+
+# SMTP Configuration (Optional)
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USER=your_smtp_username
+SMTP_PASS=your_smtp_password
+EMAIL_FROM=noreply@example.com
+BREVO_SMTP_USERNAME=your_brevo_username
+BREVO_SMTP_PASSWORD=your_brevo_password
+DISABLE_EMAIL=true
+
+# Hugging Face API (Optional)
+HUGGINGFACE_API_KEY=your_huggingface_api_key
+
+# Application Settings
+PORT=3000
+NODE_ENV=development
+BASE_URL=http://localhost:3000

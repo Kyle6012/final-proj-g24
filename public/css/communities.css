@@ -1,0 +1,225 @@
+/* Communities List Page Styles */
+
+:root {
+    /* These variables will be overridden by the main CSS if it defines them */
+    --primary-color: #3498db;
+    --primary-color-dark: #2980b9;
+    --primary-color-light: #e1f0fa;
+    --card-bg: #ffffff;
+    --text-color: #333333;
+    --text-muted: #777777;
+    --border-color: #e1e1e1;
+    --bg-light: #f8f9fa;
+    --bg-hover: #f1f1f1;
+    --input-bg: #ffffff;
+    --dark-accent: #2c3e50;
+    --dark-accent-light: #34495e;
+}
+
+.communities-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.communities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.community-card {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.community-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.community-card-header {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background-color: var(--primary-color-light);
+}
+
+.community-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 0.75rem;
+}
+
+.community-icon-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-right: 0.75rem;
+}
+
+.community-name {
+    flex-grow: 1;
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.community-name a {
+    color: var(--text-color);
+    text-decoration: none;
+}
+
+.community-name a:hover {
+    color: var(--primary-color);
+}
+
+.community-privacy {
+    color: var(--text-muted);
+    margin-left: 0.5rem;
+}
+
+.community-description {
+    padding: 1rem;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    min-height: 60px;
+    max-height: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.community-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--bg-light);
+}
+
+.community-creator {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.community-creator a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.no-communities {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    background-color: var(--card-bg);
+    border-radius: 8px;
+}
+
+/* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    margin: 10% auto;
+    padding: 1.5rem;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 600px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    right: 1.5rem;
+    top: 1rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+}
+
+.form-group small {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+/* Dark mode adjustments */
+.dark-mode .community-card {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .community-card:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+}
+
+.dark-mode .community-card-header {
+    background-color: var(--dark-accent);
+}
+
+.dark-mode .community-footer {
+    background-color: var(--dark-accent-light);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .communities-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .communities-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 5% auto;
+    }
+}

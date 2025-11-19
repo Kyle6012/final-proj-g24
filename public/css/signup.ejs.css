@@ -1,0 +1,51 @@
+h2 {
+    font-size: 3rem;
+    color: #ffffff;
+    margin-bottom: 1rem;
+}
+
+/* Form styling */
+form {
+    background-color: rgba(255, 255, 255, 0.1); /* Semi-transparent white */
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    width: 100%;
+}
+
+/* Input field styling */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ecf0f1;
+    border-radius: 5px;
+    font-size: 1rem;
+    color: #2c3e50; /* Dark text for input */
+}
+
+/* Button styling */
+button {
+    width: 100%;
+    padding: 1rem;
+    background-color: #ff7f50; /* Button color */
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+/* Button hover effect */
+button:hover {
+    background-color: red;
+    color: #121212;
+    transform: translateY(4px);
+}
+
+
+

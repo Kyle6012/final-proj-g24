@@ -1,0 +1,207 @@
+/* ================================ */
+/* Bottom Navigation Bar            */
+/* ================================ */
+.navbar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 600px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  border-radius: 30px 30px 0 0;
+  box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  padding: 0 10px;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+/* Container for all nav items */
+.navbar .nav-icons {
+  display: flex;
+  width: 100%;
+  justify-content: space-around;
+  align-items: center;
+}
+
+/* Each nav link as a circular icon button */
+.navbar .nav-icons a {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  text-decoration: none;
+  transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Icon styling */
+.navbar .nav-icons a i {
+  font-size: 22px;
+  color: #333;
+}
+
+/* Profile picture if used as an icon */
+.navbar .nav-icons a img.profile-pic {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Hover and active state */
+.navbar .nav-icons a:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: scale(1.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* Unread badge */
+.navbar .nav-icons .unread-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+
+/* ================================ */
+/* Search Container Styles         */
+/* ================================ */
+.search-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 15px;
+  z-index: 1001;
+  transition: transform 0.3s ease;
+}
+
+.search-container.hidden {
+  display: none;
+}
+
+.search-container .back-icon {
+  font-size: 24px;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+/* Center the form and constrain its width */
+.search-form {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+}
+
+/* Input styling */
+.search-form input[type="text"] {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 1em;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  margin-right: 10px;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* Button styling */
+.search-form button {
+  padding: 8px 16px;
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.search-form button:hover {
+  background: #0056b3;
+}
+
+/* ================================ */
+/* Dark Mode Overrides              */
+/* ================================ */
+.dark-mode .navbar {
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.4);
+}
+
+.dark-mode .navbar .nav-icons a {
+  background: rgba(28, 28, 28, 0.85);
+}
+
+.dark-mode .navbar .nav-icons a:hover {
+  background: rgba(28, 28, 28, 1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.6);
+}
+
+.dark-mode .navbar .nav-icons a i {
+  color: #e0e0e0;
+}
+
+.dark-mode .search-container {
+  background: rgba(18, 18, 18, 0.95);
+}
+
+.dark-mode .search-form input[type="text"] {
+  background: #1e1e1e;
+  border: 1px solid #444;
+  color: #e0e0e0;
+}
+
+.dark-mode .search-form button {
+  background: #bb86fc;
+}
+
+.dark-mode .search-form button:hover {
+  background: #9b68c9;
+}
+
+/* ================================ */
+/* Responsive Adjustments           */
+/* ================================ */
+@media (max-width: 480px) {
+  .navbar {
+    max-width: 100%;
+    height: 50px;
+    border-radius: 0;
+    padding: 0 5px;
+  }
+  .navbar .nav-icons a {
+    width: 40px;
+    height: 40px;
+  }
+  .navbar .nav-icons a i,
+  .navbar .nav-icons a img.profile-pic {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+  .search-container {
+    height: 50px;
+  }
+  .search-form input[type="text"] {
+    padding: 6px 10px;
+  }
+  .search-form button {
+    padding: 6px 12px;
+  }
+}

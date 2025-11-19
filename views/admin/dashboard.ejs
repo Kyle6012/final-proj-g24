@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="ut-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+        <title>Admin Dashboard</title>
+        <link rel="stylesheet" href="/css/admin/dashboard.ejs.css">
+    </head>
+    <body>
+        <h1>Welcome Admin: <%= admin.username %> </h1>
+        <nav style="margin: 20px 0;">
+            <a href="/admin/panel/moderation" style="padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin-right: 10px;">Moderation Queue</a>
+            <a href="/admin/panel/dasboard" style="padding: 10px 20px; background: #333; color: white; text-decoration: none; border-radius: 5px;">Dashboard</a>
+        </nav>
+
+        <!--User mornitoring-->
+        <section>
+            <h2>Users</h2>
+            <table>
+                <tr><th>Username</th><th>Email</th><th>Actions</th></tr>
+                <% users.forEach(user => { %>
+                    <tr>
+                        <td><%= user.username %></td>
+                        <td><%= user.email %></td>
+                        <td>
+                            <form action="/admin/user/suspend/<%= user.id %>" method="POST">
+                                <button type="submit">Suspend</button>
+                            </form>
+                            <form action="/admin/user/delete/<%= user.id %>" method="POST">
+                                <button type="submit">Delete</button> 
+                            </form>
+                        </td>
+                    </tr> 
+                <% }); %> 
+            </table>
+        </section>
+
+        <!--custom email-->
+        <section>
+            <h2>Send Email</h2>
+            <form action="/admin/panel/dashbord/send-email" method="POST">
+                <input type="text" name="emails" placeholder="Emails (comma separated)" required><br>
+                <input type="text" name="subject" placeholder="Subject" required><br>
+                <textarea name="message" placeholder="Message" required></textarea><br>
+            </form>
+        </section>
+
+        <!--app wide notifications-->
+        <section>
+            <h2>App-wide notifier</h2>
+            <form action="/admin/panel/notify" method="POST">
+                <input type="text" name="title" placeholder="Notification Title" required><br>
+                <textarea name="message" placeholder="Message" required></textarea><br>
+                <button type="submit">Notify Users</button>
+            </form>
+        </section>
+    </body>
+</html>

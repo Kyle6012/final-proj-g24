@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Feed</title>
+  <link rel="stylesheet" href="/css/feed.ejs.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/feed.js"></script>
+  <script src="/js/theme.js"></script>
+</head>
+<body class="light-mode">
+  <%- include('partials/navbar') %>
+
+  <div class="main-container">
+    <div class="post-container">
+      <h3>Feed</h3>
+      <h2>Welcome, <%= user.fullname %></h2>
+      <a href="/feed/create">Create Post</a>
+
+      <% posts.forEach(post => { %>
+      <div class="post" id="post-<%= post.id %>">
+        <div class="post-header">
+          <a href="/profile/<%= post.User.username %>" class="post-user-info">
+            <img src="<%= post.User.profilePic || '/images/default.png' %>" alt="profile picture" class="post-user-pic">
+            <span class="post-username"><%= post.User.username %></span>
+          </a>
+        </div>
+
+        <div class="post-content">
+          <% if (post.title) { %>
+            <h3 class="post-title"><%= post.title %></h3>
+          <% } %>
+          <p class="post-text"><%= post.content %></p>
+          
+          <% if (post.linkPreview) { %>
+            <% if (post.linkPreview.type === 'youtube') { %>
+              <div class="video-preview">
+                <div class="video-container">
+                  <iframe src="<%= post.linkPreview.embedUrl %>" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+              </div>
+            <% } else if (post.linkPreview.type === 'link') { %>
+              <a href="<%= post.linkPreview.url %>" target="_blank" rel="noopener noreferrer" class="link-preview">
+                <% if (post.linkPreview.image) { %>
+                  <div class="preview-image-container">
+                    <img src="<%= post.linkPreview.image %>" alt="Preview image" class="preview-image" onerror="this.style.display='none'">
+                  </div>
+                <% } %>
+                <div class="preview-details">
+                  <% if (post.linkPreview.siteName) { %>
+                    <span class="preview-site"><%= post.linkPreview.siteName %></span>
+                  <% } %>
+                  <% if (post.linkPreview.title) { %>
+                    <h4 class="preview-title"><%= post.linkPreview.title %></h4>
+                  <% } %>
+                  <% if (post.linkPreview.description) { %>
+                    <p class="preview-description"><%= post.linkPreview.description %></p>
+                  <% } %>
+                </div>
+              </a>
+            <% } %>
+          <% } else if (post.mediaType === "image") { %>
+            <img src="<%= post.mediaUrl %>" alt="<%= post.title %>" class="post-media">
+          <% } else if (post.mediaType === "pdf") { %>
+            <a href="<%= post.mediaUrl %>" target="_blank" class="post-media-link">View Document Shared</a>
+          <% } %>
+        </div>
+
+        <div class="post-actions">
+          <button type="button" class="like-button" data-post-id="<%= post.id %>">
+            <i class="fas fa-thumbs-up"></i>
+            <span id="like-count-<%= post.id %>"><%= post.likeCount %></span>
+          </button>
+
+          <% if (post.userId === user.id) { %>
+            <a href="/feed/edit/<%= post.id %>">Edit</a>
+            <form action="/feed/delete/<%= post.id %>" method="POST" onsubmit="return confirm('Are you sure?');" class="del-form">
+              <button type="submit">Delete</button>
+            </form>
+          <% } %>
+
+          <button type="button" class="view-comments-btn" data-post-id="<%= post.id %>">
+            <i class="fas fa-comments"></i>Comments
+          </button>
+        </div>
+      </div>
+      <% }); %>
+    </div>
+  </div>
+
+  <!-- Comments Modal -->
+  <div id="commentsModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3 class="modal-title">Comments</h3>
+      <div id="commentsContent"></div>
+      <form id="modalCommentForm">
+        <textarea id="modalCommentInput" placeholder="Leave a comment..." required></textarea>
+        <button type="submit">Comment</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const socket = io({ withCredentials: true });
+    let currentPostId = null;
+
+    // Store all posts data from initial page render
+    const postsData = JSON.parse(JSON.stringify(<%- JSON.stringify(posts) %>));
+
+    // Open comments modal
+    document.querySelectorAll('.view-comments-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            currentPostId = this.getAttribute('data-post-id');
+            document.getElementById('commentsModal').style.display = 'block';
+            loadComments(currentPostId);
+        });
+    });
+
+    // Close modal when clicking X
+    document.querySelector('.close').addEventListener('click', function() {
+        document.getElementById('commentsModal').style.display = 'none';
+    });
+
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target === document.getElementById('commentsModal')) {
+            document.getElementById('commentsModal').style.display = 'none';
+        }
+    });
+
+    // Handle comment submission
+    document.getElementById('modalCommentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const content = document.getElementById('modalCommentInput').value.trim();
+        if (content && currentPostId) {
+            socket.emit('sendComment', { 
+                postId: currentPostId, 
+                content 
+            });
+            document.getElementById('modalCommentInput').value = '';
+        }
+    });
+
+    // Handle new comments from socket
+    socket.on('newComment', (data) => {
+        if (data.postId === currentPostId) {
+            addCommentToModal(data.comment);
+        }
+        
+        // Also update the in-memory posts data
+        const post = postsData.find(p => p.id == data.postId);
+        if (post) {
+            if (!post.Comments) post.Comments = [];
+            post.Comments.push(data.comment);
+        }
+    });
+
+    // Handle likes
+    document.querySelectorAll('.like-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const postId = this.getAttribute('data-post-id');
+            socket.emit('likePost', postId);
+        });
+    });
+
+    // Update like count
+    socket.on('newLike', (data) => {
+        const likeCountElem = document.getElementById('like-count-' + data.postId);
+        if (likeCountElem) {
+            likeCountElem.textContent = data.likeCount;
+        }
+    });
+
+    // Load comments for a post from preloaded data
+    function loadComments(postId) {
+        const post = postsData.find(p => p.id == postId);
+        const commentsContent = document.getElementById('commentsContent');
+        commentsContent.innerHTML = '';
+        
+        if (!post || !post.Comments || post.Comments.length === 0) {
+            commentsContent.innerHTML = '<p class="no-comments">No comments yet.</p>';
+            return;
+        }
+        
+        // Sort comments by date (oldest first)
+        const sortedComments = [...post.Comments].sort((a, b) => 
+            new Date(a.createdAt) - new Date(b.createdAt)
+        );
+        
+        sortedComments.forEach(comment => {
+            addCommentToModal(comment);
+        });
+    }
+
+    // Add a comment to the modal
+    function addCommentToModal(comment) {
+        const commentsContent = document.getElementById('commentsContent');
+        const noCommentsMsg = commentsContent.querySelector('.no-comments');
+        
+        if (noCommentsMsg) {
+	            noCommentsMsg.remove();
+        }
+        
+        const commentDiv = document.createElement('div');
+        commentDiv.className = 'comment';
+        commentDiv.innerHTML = `
+            <div class="comment-user-info">
+                <img src="${comment.User.profilePic || '/images/default.png'}" class="comment-user-pic">
+                <span class="comment-username">${comment.User.username}</span>
+            </div>
+            <p class="comment-text">${comment.content}</p>
+            <small class="comment-time">${new Date(comment.createdAt).toLocaleString()}</small>
+            ${comment.userId === '<%= user.id %>' ? `
+                <form action="/comments/delete/${comment.id}" method="POST" class="delete-comment-form">
+                    <button type="submit">Delete</button>
+                </form>
+            ` : ''}
+        `;
+        
+        commentsContent.appendChild(commentDiv);
+    }
+   });
+  </script>
+</body>
+</html>
+

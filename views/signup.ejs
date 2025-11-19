@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up</title>
+  <link rel="stylesheet" href="/css/index.ejs.css" />
+  <link rel="stylesheet" href="/css/signup.ejs.css" />
+  <style>
+    .response-message {
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+    }
+    .success {
+      background-color: #c6efce;
+      color: #2e6f29;
+    }
+    .error {
+      background-color: #ffeeee;
+      color: #a80000;
+    }
+    
+    /* Basic styling for our real-time messages */
+    .input-message {
+      font-size: 0.9rem;
+      margin-top: -0.5rem;
+      margin-bottom: 1rem;
+    }
+    .input-message.error {
+      color: #a80000;
+    }
+    .input-message.success {
+      color: #2e6f29;
+    }
+  </style>
+</head>
+<body>
+  <h2>Sign Up</h2>
+
+  <form id="signupForm" action="/auth/signup" method="POST">
+    <!-- First and Last Name Fields -->
+    <input type="text" name="firstName" placeholder="First Name" required />
+    <span id="firstNameMessage" class="input-message"></span>
+    
+    <input type="text" name="lastName" placeholder="Last Name" required />
+    <span id="lastNameMessage" class="input-message"></span>
+    
+    <!-- Email Field -->
+    <input type="email" name="email" placeholder="Email" required />
+
+    <!-- Password Fields -->
+    <input type="password" id="password" name="password" placeholder="Password" required />
+    <span id="passwordLengthMessage" class="input-message"></span>
+
+    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm Password" required />
+    <span id="passwordMatchMessage" class="input-message"></span>
+
+    <!-- Signup Button -->
+    <button type="submit">Sign Up</button>
+  </form>
+
+  <div class="link-container">
+    <a href="/auth/google">Google</a>
+    <a href="/auth/github">GitHub</a>
+  </div>
+
+  <p>Already have an account? <a href="/auth/login">Login</a></p>
+
+  <div id="responseMessage"></div>
+
+  <script>
+    const lettersOnlyRegEx = /^[A-Za-z]+$/;
+
+    const firstNameInput = document.getElementsByName("firstName")[0];
+    const lastNameInput = document.getElementsByName("lastName")[0];
+    const passwordInput = document.getElementById("password");
+    const confirmPasswordInput = document.getElementById("confirmPassword");
+
+    const firstNameMessage = document.getElementById("firstNameMessage");
+    const lastNameMessage = document.getElementById("lastNameMessage");
+    const passwordLengthMessage = document.getElementById("passwordLengthMessage");
+    const passwordMatchMessage = document.getElementById("passwordMatchMessage");
+
+    function validateName(input, messageElement) {
+      if (!lettersOnlyRegEx.test(input.value)) {
+        messageElement.textContent = "Letters only. No numbers or symbols allowed.";
+        messageElement.classList.remove("success");
+        messageElement.classList.add("error");
+        return false;
+      } else {
+        messageElement.textContent = "";
+        return true;
+      }
+    }
+
+    firstNameInput.addEventListener("input", () => {
+      validateName(firstNameInput, firstNameMessage);
+    });
+
+    lastNameInput.addEventListener("input", () => {
+      validateName(lastNameInput, lastNameMessage);
+    });
+
+    passwordInput.addEventListener("input", () => {
+      if (passwordInput.value.length < 8) {
+        passwordLengthMessage.textContent = "Password must be 8 characters or more.";
+        passwordLengthMessage.classList.remove("success");
+        passwordLengthMessage.classList.add("error");
+      } else {
+        passwordLengthMessage.textContent = "Password length OK.";
+        passwordLengthMessage.classList.remove("error");
+        passwordLengthMessage.classList.add("success");
+      }
+      checkPasswordMatch();
+    });
+
+    function checkPasswordMatch() {
+      if (confirmPasswordInput.value === "") {
+        passwordMatchMessage.textContent = "";
+        return;
+      }
+      if (passwordInput.value === confirmPasswordInput.value) {
+        passwordMatchMessage.textContent = "Passwords match.";
+        passwordMatchMessage.classList.remove("error");
+        passwordMatchMessage.classList.add("success");
+      } else {
+        passwordMatchMessage.textContent = "Passwords do not match.";
+        passwordMatchMessage.classList.remove("success");
+        passwordMatchMessage.classList.add("error");
+      }
+    }
+
+    confirmPasswordInput.addEventListener("input", checkPasswordMatch);
+    passwordInput.addEventListener("input", checkPasswordMatch);
+
+    document.getElementById("signupForm").addEventListener("submit", async function(event) {
+      event.preventDefault(); 
+
+      const validFirstName = validateName(firstNameInput, firstNameMessage);
+      const validLastName = validateName(lastNameInput, lastNameMessage);
+      if (!validFirstName || !validLastName) {
+        alert("Please correct the name fields to contain letters only.");
+        return;
+      }
+
+      if (passwordInput.value.length < 8) {
+        alert("Password must be 8 characters or more.");
+        return;
+      }
+      if (passwordInput.value !== confirmPasswordInput.value) {
+        alert("Passwords do not match.");
+        return;
+      }
+
+      const formData = new FormData(this);
+      const data = {
+        firstName: formData.get('firstName'),
+        lastName: formData.get('lastName'),
+        email: formData.get('email'),
+        password: formData.get('password')
+      };
+
+      try {
+        const response = await fetch(this.action, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        const responseMessage = document.getElementById('responseMessage');
+        responseMessage.className = 'response-message';
+
+        if (response.ok) {
+          responseMessage.textContent = "Sign Up successful";
+          window.location.href = "/auth/signup/complete/verify";
+        } else {
+          responseMessage.innerHTML = `<div class="error">${result.message || 'Signup failed. Please try again.'}</div>`;
+        }
+      } catch (error) {
+        console.error('Error during signup:', error);
+        const responseMessage = document.getElementById('responseMessage');
+        responseMessage.innerHTML = `<div class="error">An error occurred. Please try again: ${error}</div>`;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+/* Reset default styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Apply gradient background and modern font */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); /* Darker gradient with blue, red, and yellow */
+    color: #ecf0f1;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+/* Style for the logo container */
+.logo-container {
+    margin-bottom: 2rem; /* Spacing between the logo and title */
+}
+
+/* Styling for the logo to make it circular */
+.logo {
+    width: 120px; /* Adjust logo size */
+    height: 120px; /* Make height equal to width to form a circle */
+    border-radius: 50%; /* Make the logo circular */
+    object-fit: cover; /* Ensures the image fills the circle without distortion */
+}
+
+/* Title styling */
+h1 {
+    font-size: 3rem;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+}
+
+/* Subtitle text */
+p {
+    font-size: 1.2rem;
+    color: #bdc3c7;
+    margin-bottom: 2rem;
+    max-width: 600px;
+}
+
+/* Style for the links container */
+div.link-container {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+}
+
+/* Styling for the links */
+a {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.8rem 1.5rem;
+    border: 2px solid transparent;
+    border-radius: 3px;
+    background-color: transparent;
+    transition: all 0.3s ease;
+}
+
+/* Hover effect for links */
+a:hover {
+    background: #ff7f50; /* Orange, Blue, Red gradient */
+    color: #121212; /* Dark text color */
+}
+
+/* Responsive layout for smaller screens */
+@media (max-width: 600px) {
+    h1 {
+        font-size: 2.5rem;
+    }
+
+    p {
+        font-size: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    div.link-container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}

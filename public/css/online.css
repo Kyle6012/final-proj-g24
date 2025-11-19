@@ -1,0 +1,12 @@
+.online-indicator {
+    width: 10px;
+    height: 10px;
+    background: red;
+    border-radius: 50%;
+    border: 2px solid white;
+    position: absolute;
+    top: 15px;
+    left: 40px;
+    display: none;     
+    bottom: 5px;      
+}

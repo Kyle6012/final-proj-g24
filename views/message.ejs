@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Messages</title>
+  <!-- Link to the dedicated stylesheet for messages -->
+  <link rel="stylesheet" href="/css/message.ejs.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body class="light-mode">
+  <!-- Include sidebar and theme partial -->
+  <%- include('partials/navbar') %>
+
+  <!-- Main Container adjusted to allow space for sidebar -->
+  <div class="main-container">
+    <h1 class="page-title">Messages</h1>
+    <div class="chat-list">
+      
+      <!-- Loop through other users -->
+      <% users.forEach(user => { %>
+        <div class="chat-user" data-user-id="<%= user.dataValues.id %>">
+          <div class="chat-user-img">
+            <img src="<%= user.dataValues.profilePic || '/images/default.png' %>" alt="<%= user.dataValues.username || 'Unknown User' %>">
+            <span class="online-indicator" id="online-<%= user.dataValues.id %>"></span>
+          </div>
+          <a href="/user/chat/<%= user.dataValues.id || '#' %>" class="chat-username"><%= user.dataValues.username || 'Unknown User' %></a>
+          <% if (user.dataValues.unreadCount && user.dataValues.unreadCount > 0) { %>
+            <span class="unread-badge"><%= user.dataValues.unreadCount %></span>
+          <% } %>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+  
+  <script>
+    const socket = io({ withCredentials: true });
+    // Update online indicators for chat users
+    socket.on('updateOnlineUsers', (onlineUsers) => {
+      document.querySelectorAll('.chat-user').forEach(chatUser => {
+        const userId = chatUser.getAttribute('data-user-id');
+        const onlineIndicator = chatUser.querySelector('.online-indicator');
+        if (onlineUsers.includes(userId)) {
+          onlineIndicator.style.display = 'inline-block';
+        } else {
+          onlineIndicator.style.display = 'none';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

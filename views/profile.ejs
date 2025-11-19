@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= user.username %> - Profile</title>
+  <link rel="icon" href="<%= user.profilePic || '/images/default.png' %>" type="image/*">
+  <link rel="stylesheet" href="/css/profile.ejs.css">
+  <link rel="stylesheet" href="/css/spinner.css">
+  <link rel="stylesheet" href="/css/online.css">
+  <link rel="stylesheet" href="/css/linkPreview.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      animation: fadeIn 0.3s ease-out;
+      overflow-y: auto;
+    }
+
+    .modal-content {
+      position: relative;
+      background-color: #fff;
+      margin: 5% auto;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      width: 90%;
+      max-width: 500px;
+      transform: translateY(-20px);
+      transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+      opacity: 0;
+    }
+
+    .modal.show .modal-content {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .modal-header {
+      margin-bottom: 1.5rem;
+      color: #333;
+      font-size: 1.5rem;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .close {
+      position: absolute;
+      top: 1rem;
+      right: 1.5rem;
+      color: #aaa;
+      font-size: 1.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .close:hover {
+      color: #333;
+    }
+
+    /* Form Styles */
+    .modal form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .modal label {
+      font-weight: 500;
+      color: #555;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .modal textarea,
+    .modal input[type="text"],
+    .modal input[type="url"] {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-family: inherit;
+      transition: border-color 0.3s;
+    }
+    
+    .modal textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .modal textarea:focus {
+      outline: none;
+      border-color: #3897f0;
+      box-shadow: 0 0 0 2px rgba(56, 151, 240, 0.2);
+    }
+
+    /* Modern File Input Styling */
+    .file-input-container {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+
+    .file-input-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      border: 2px dashed #ddd;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+    }
+
+    .file-input-label:hover {
+      border-color: #3897f0;
+      background-color: rgba(56, 151, 240, 0.05);
+    }
+
+    .file-input-label i {
+      font-size: 2rem;
+      color: #3897f0;
+      margin-bottom: 0.5rem;
+    }
+
+    .file-input-label span {
+      color: #555;
+    }
+
+    .file-input {
+      position: absolute;
+      width: 0.1px;
+      height: 0.1px;
+      opacity: 0;
+      overflow: hidden;
+      z-index: -1;
+    }
+
+    .file-preview {
+      margin-top: 1rem;
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 8px;
+      display: none;
+    }
+
+    /* Button Styles */
+    .modal button[type="submit"] {
+      background-color: #3897f0;
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      align-self: flex-end;
+    }
+
+    .modal button[type="submit"]:hover {
+      background-color: #2680eb;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Dark Mode Support */
+    .dark-mode .modal-content {
+      background-color: #1e1e1e;
+      color: #f5f5f5;
+    }
+
+    .dark-mode .modal-header,
+    .dark-mode .close:hover {
+      color: #f5f5f5;
+    }
+
+    .dark-mode .modal textarea,
+    .dark-mode .modal input[type="text"],
+    .dark-mode .modal input[type="url"] {
+      background-color: #2d2d2d;
+      border-color: #444;
+      color: #f5f5f5;
+    }
+
+    .dark-mode .file-input-label {
+      border-color: #444;
+      background-color: #2d2d2d;
+    }
+
+    .dark-mode .file-input-label:hover {
+      border-color: #3897f0;
+      background-color: rgba(56, 151, 240, 0.1);
+    }
+
+    .dark-mode .file-input-label span {
+      color: #aaa;
+    }
+    
+    /* Toast animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-20px); }
+    }
+    
+    .success-toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #4CAF50;
+      color: white;
+      padding: 15px;
+      border-radius: 5px;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      animation: fadeIn 0.3s, fadeOut 0.3s 2.5s;
+      animation-fill-mode: forwards;
+    }
+    
+    .dark-mode .success-toast {
+      background-color: #2e7d32;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    }
+  </style>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/theme.js"></script>
+  <script src="/js/profileUpdate.js"></script>
+</head>
+<body class="light-mode">
+  <%- include('partials/navbar') %>
+  <div class="container">
+    <!-- Profile Header -->
+    <div class="profile-header">
+      <div class="profile-picture-container">
+        <img src="<%= user.profilePic || '/images/default.png' %>" alt="Profile Picture">
+        <span id="profile-online-indicator" class="online-indicator"></span>
+      </div>
+      <div class="profile-info">
+        <h2 class="username"><%= user.username %></h2>
+        <p class="bio"><%= user.bio || "No bio available" %></p>
+        <% if (user.id === loggedInUserId) { %>
+          <button class="edit-profile-button" id="editProfileButton">Edit Profile</button>
+        <% } else { %>
+          <button class="message-button" id="messageButton">Message</button>
+          <div id="messageLoading" class="spinner-overlay">
+            <div class="loading-spinner"></div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Response Messages -->
+    <div id="uploadResponseMessage" class="response-message"></div>
+    <div id="bioResponseMessage" class="response-message"></div>
+
+    <!-- Posts Section -->
+    <div class="posts-section">
+      <h3>Posts</h3>
+      <% if (user.Posts && user.Posts.length > 0) { %>
+        <div class="posts-grid">
+          <% user.Posts.forEach(post => {
+              function getYTEmbedUrl(text) {
+                const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\\?v=|shorts\/)|youtu\\.be\/)([^\s&?]+)/;
+                const match = text.match(regex);
+                if (match && match[1]) return `https://www.youtube.com/embed/${match[1]}`;
+                return null;
+              }
+              const ytEmbed = getYTEmbedUrl(post.content);
+          %>
+          <div class="post" id="post-<%= post.id %>">
+            <div class="post-content">
+              <% if (post.title) { %>
+                <h4 class="post-title"><%= post.title %></h4>
+              <% } %>
+              <p class="post-text"><%= post.content %></p>
+              <% if (ytEmbed) { %>
+                <div class="youtube-preview">
+                  <iframe src="<%= ytEmbed %>" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture;" allowfullscreen></iframe>
+                </div>
+              <% } else if (post.linkPreview) { %>
+                <div class="link-preview">
+                  <% if (post.linkPreview.image) { %>
+                    <img src="<%= post.linkPreview.image %>" alt="preview image" class="preview-image">
+                  <% } %>
+                  <div class="preview-details">
+                    <h4 class="preview-title"><%= post.linkPreview.title %></h4>
+                    <p class="preview-description"><%= post.linkPreview.description %></p>
+                    <a href="<%= post.linkPreview.url %>" target="_blank">Visit Link</a>
+                  </div>
+                </div>
+              <% } else if (post.mediaType === "image") { %>
+                <img src="<%= post.mediaUrl %>" alt="<%= post.title %>" class="post-media">
+              <% } else if (post.mediaType === "pdf") { %>
+                <a href="<%= post.mediaUrl %>" target="_blank" class="post-media-link">View Document</a>
+              <% } %>
+            </div>
+          </div>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <p class="no-posts-message">No posts to show.</p>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Edit Profile Modal -->
+  <div id="editProfileModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closeModal">&times;</span>
+      <h2 class="modal-header">Edit Profile</h2>
+      <form id="editProfilePicForm" action="/profile/upload-profile-pic" method="POST" enctype="multipart/form-data">
+        <div class="file-input-container">
+          <label for="profilePicInput" class="file-input-label">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span>Click to upload profile picture</span>
+            <img id="profilePicPreview" class="file-preview" src="#" alt="Preview">
+          </label>
+          <input type="file" name="image" id="profilePicInput" class="file-input" accept="image/*" required>
+        </div>
+        <button type="submit">Upload</button>
+      </form>
+      <form id="profileUpdateForm" action="/profile/update" method="POST">
+        <label for="fullname">Full Name</label>
+        <input type="text" name="fullname" id="fullname" value="<%= user.fullname %>" required>
+        
+        <label for="bioInput">Bio</label>
+        <textarea name="bio" id="bioInput" placeholder="Write something about yourself"><%= user.bio %></textarea>
+        
+        <label for="location">Location</label>
+        <input type="text" name="location" id="location" value="<%= user.location || '' %>">
+        
+        <label for="website">Website</label>
+        <input type="url" name="website" id="website" value="<%= user.website || '' %>">
+        
+        <button type="submit">Update Profile</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const socket = io({ withCredentials: true });
+    document.addEventListener("DOMContentLoaded", function() {
+      const editProfileButton = document.getElementById('editProfileButton');
+      const messageButton = document.getElementById('messageButton');
+      const messageLoading = document.getElementById('messageLoading');
+      const closeModal = document.getElementById('closeModal');
+      const profilePicInput = document.getElementById('profilePicInput');
+      const profilePicPreview = document.getElementById('profilePicPreview');
+
+      if (messageLoading) messageLoading.style.display = "none";
+
+      // Modal show/hide with animations
+      if (editProfileButton) {
+        editProfileButton.onclick = function() {
+          document.getElementById('editProfileModal').classList.add('show');
+          document.getElementById('editProfileModal').style.display = "block";
+          setTimeout(() => {
+            document.querySelector('.modal-content').style.opacity = "1";
+            document.querySelector('.modal-content').style.transform = "translateY(0)";
+          }, 10);
+        };
+      }
+
+      if (messageButton) {
+        messageButton.onclick = function() {
+          const receiverId = "<%= user.id %>";
+          messageLoading.style.display = "block";
+          setTimeout(() => {
+            messageLoading.style.display = "none";
+            window.location.href = `/user/chat/${receiverId}`;
+          }, 500);
+        };
+      }
+
+      if (closeModal) {
+        closeModal.onclick = function() {
+          document.querySelector('.modal-content').style.opacity = "0";
+          document.querySelector('.modal-content').style.transform = "translateY(-20px)";
+          setTimeout(() => {
+            document.getElementById('editProfileModal').style.display = "none";
+            document.getElementById('editProfileModal').classList.remove('show');
+          }, 300);
+        };
+      }
+
+      // File input preview
+      if (profilePicInput && profilePicPreview) {
+        profilePicInput.addEventListener('change', function(e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+              profilePicPreview.src = event.target.result;
+              profilePicPreview.style.display = 'block';
+              document.querySelector('.file-input-label span').textContent = file.name;
+            }
+            reader.readAsDataURL(file);
+          }
+        });
+      }
+
+      window.onclick = function(event) {
+        if (event.target === document.getElementById('editProfileModal')) {
+          document.querySelector('.modal-content').style.opacity = "0";
+          document.querySelector('.modal-content').style.transform = "translateY(-20px)";
+          setTimeout(() => {
+            document.getElementById('editProfileModal').style.display = "none";
+            document.getElementById('editProfileModal').classList.remove('show');
+          }, 300);
+        }
+      };
+
+      // Socket.io events for real-time profile updates
+      socket.on("profileUpdated", (data) => {
+        if (data.username === "<%= user.username %>") {
+          // Update form fields
+          if (document.getElementById('bioInput')) {
+            document.getElementById('bioInput').value = data.bio || '';
+          }
+          if (document.getElementById('fullname')) {
+            document.getElementById('fullname').value = data.fullname || '';
+          }
+          if (document.getElementById('location')) {
+            document.getElementById('location').value = data.location || '';
+          }
+          if (document.getElementById('website')) {
+            document.getElementById('website').value = data.website || '';
+          }
+          
+          // Update displayed profile info
+          const bioElement = document.querySelector('.profile-info .bio');
+          if (bioElement) {
+            bioElement.textContent = data.bio || 'No bio available';
+          }
+          
+          const usernameElement = document.querySelector('.profile-info .username');
+          if (usernameElement && data.fullname) {
+            usernameElement.textContent = data.username;
+          }
+          
+          // Update profile picture if provided
+          const profilePicElement = document.querySelector('.profile-header img');
+          if (profilePicElement && data.profilePic) {
+            profilePicElement.src = data.profilePic;
+          }
+          
+          // Show success toast
+          const toast = document.createElement('div');
+          toast.className = 'success-toast';
+          toast.textContent = 'Profile updated successfully';
+          document.body.appendChild(toast);
+          
+          setTimeout(() => {
+            toast.remove();
+          }, 3000);
+        }
+      });
+
+      socket.on('updateOnlineUsers', (onlineUsers) => {
+        const indicator = document.getElementById('profile-online-indicator');
+        if (onlineUsers.includes("<%= user.id %>")) {
+          indicator.style.display = 'inline-block';
+        } else {
+          indicator.style.display = 'none';
+        }
+      });
+
+      async function handleFormSubmit(event, formId, action, responseMessageId) {
+        event.preventDefault();
+        const spinnerOverlay = document.createElement('div');
+        spinnerOverlay.classList.add('spinner-overlay');
+        spinnerOverlay.innerHTML = `<div class="loading-spinner"></div>`;
+        document.body.appendChild(spinnerOverlay);
+
+        const formData = new FormData(document.getElementById(formId));
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => { controller.abort(); }, 40000);
+
+        try {
+          const response = await fetch(action, {
+            method: 'POST',
+            body: formData,
+            signal: controller.signal
+          });
+
+          clearTimeout(timeoutId);
+          spinnerOverlay.remove();
+
+          const responseMessage = document.getElementById(responseMessageId);
+          if (response.ok) {
+            const result = await response.json();
+            responseMessage.classList.add('success');
+            responseMessage.textContent = result.message || "Operation successful!";
+            responseMessage.style.display = 'block';
+
+            if (action === "/profile/update") {
+              document.querySelector('.bio').textContent = result.bio;
+            }
+
+            if (action === "/profile/upload-profile-pic") {
+              const profilePicElement = document.querySelector('.profile-header img');
+              profilePicElement.src = result.profilePic || '/images/default.png';
+            }
+
+            document.querySelector('.modal-content').style.opacity = "0";
+            document.querySelector('.modal-content').style.transform = "translateY(-20px)";
+            setTimeout(() => {
+              document.getElementById('editProfileModal').style.display = "none";
+              document.getElementById('editProfileModal').classList.remove('show');
+            }, 300);
+          } else {
+            throw new Error('Operation failed');
+          }
+        } catch (error) {
+          console.error('Error during operation:', error);
+          const responseMessage = document.getElementById(responseMessageId);
+          responseMessage.classList.add('error');
+          responseMessage.textContent = 'An error occurred. Please try again.';
+          responseMessage.style.display = 'block';
+        }
+      }
+
+      // Profile pic form still uses traditional submission
+      document.getElementById('editProfilePicForm').addEventListener('submit', function(event) {
+        const fileInput = document.getElementById('profilePicInput');
+        const file = fileInput.files[0];
+        if (!file) {
+          alert('Please select a file');
+          return;
+        }
+
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+          alert('Please upload a valid image file (JPEG, PNG, GIF)');
+          return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+          alert('File size too large. Please use an image under 5MB.');
+          return;
+        }
+
+        handleFormSubmit(event, 'editProfilePicForm', '/profile/upload-profile-pic', 'uploadResponseMessage');
+      });
+      
+      // The profileUpdateForm is handled by profileUpdate.js using WebSockets
+    });
+  </script>
+</body>
+</html>

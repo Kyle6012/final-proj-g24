@@ -1,0 +1,39 @@
+.youtube-preview {
+    margin-top: 10px;
+    width: 100%;
+    border-radius: 5px;
+}
+
+.link-preview {
+    display: flex;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.link-preview img.preview-image {
+    width: 120px;
+    object-fit: cover;
+}
+
+.link-preview .preview-details {
+    padding: 10px;
+}
+
+.link-preview .preview-details h4 {
+    margin: 0 0 5px;
+    font-size: 1.1;
+}
+
+.link-preview .preview-details p {
+    margin: 0 0 10px;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.link-preview .preview-details a {
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+}

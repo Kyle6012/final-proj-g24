@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderation Queue - Admin Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin-bottom: 10px;
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        .stat-box {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .tab-btn.active {
+            background: #764ba2;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .queue-item {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .queue-item-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .user-info h3 {
+            margin-bottom: 5px;
+        }
+        .user-info p {
+            color: #666;
+            font-size: 14px;
+        }
+        .queue-item-content {
+            margin-bottom: 15px;
+        }
+        .queue-item-content h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .queue-item-content p {
+            line-height: 1.6;
+            color: #555;
+            margin-bottom: 10px;
+        }
+        .queue-item-media {
+            margin-top: 15px;
+        }
+        .queue-item-media img {
+            max-width: 100%;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .queue-item-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn-approve {
+            background: #4caf50;
+            color: white;
+        }
+        .btn-approve:hover {
+            background: #45a049;
+        }
+        .btn-reject {
+            background: #f44336;
+            color: white;
+        }
+        .btn-reject:hover {
+            background: #da190b;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 8px;
+            color: #666;
+        }
+        .timestamp {
+            color: #999;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .comment-post-ref {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Moderation Queue</h1>
+        <p>Welcome, <%= admin.username %></p>
+        <div class="stats">
+            <div class="stat-box">
+                <strong><%= postsCount %></strong> Pending Posts
+            </div>
+            <div class="stat-box">
+                <strong><%= commentsCount %></strong> Pending Comments
+            </div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('posts')">Pending Posts (<%= postsCount %>)</button>
+        <button class="tab-btn" onclick="showTab('comments')">Pending Comments (<%= commentsCount %>)</button>
+        <a href="/admin/panel/dasboard" style="margin-left: auto; padding: 10px 20px; background: #333; color: white; text-decoration: none; border-radius: 5px;">Back to Dashboard</a>
+    </div>
+
+    <!-- Posts Tab -->
+    <div id="posts-tab" class="tab-content active">
+        <% if (pendingPosts.length === 0) { %>
+            <div class="empty-state">
+                <h2>🎉 No pending posts!</h2>
+                <p>All posts have been reviewed.</p>
+            </div>
+        <% } else { %>
+            <% pendingPosts.forEach(post => { %>
+                <div class="queue-item" id="post-<%= post.id %>">
+                    <div class="queue-item-header">
+                        <img src="<%= post.User.profilePic || '/images/default.png' %>" alt="Profile" class="user-avatar">
+                        <div class="user-info">
+                            <h3><%= post.User.username %></h3>
+                            <p><%= post.User.fullname %> • <%= post.User.email %></p>
+                            <div class="timestamp">Submitted: <%= new Date(post.createdAt).toLocaleString() %></div>
+                        </div>
+                    </div>
+                    <div class="queue-item-content">
+                        <h4><%= post.title %></h4>
+                        <p><%= post.content %></p>
+                        <% if (post.mediaUrl) { %>
+                            <div class="queue-item-media">
+                                <% if (post.mediaType === 'image') { %>
+                                    <img src="<%= post.mediaUrl %>" alt="Post media">
+                                <% } else if (post.mediaType === 'pdf') { %>
+                                    <a href="<%= post.mediaUrl %>" target="_blank">View PDF</a>
+                                <% } %>
+                            </div>
+                        <% } %>
+                    </div>
+                    <div class="queue-item-actions">
+                        <button class="btn btn-approve" onclick="approvePost('<%= post.id %>')">✓ Approve</button>
+                        <button class="btn btn-reject" onclick="rejectPost('<%= post.id %>')">✗ Reject</button>
+                    </div>
+                </div>
+            <% }); %>
+        <% } %>
+    </div>
+
+    <!-- Comments Tab -->
+    <div id="comments-tab" class="tab-content">
+        <% if (pendingComments.length === 0) { %>
+            <div class="empty-state">
+                <h2>🎉 No pending comments!</h2>
+                <p>All comments have been reviewed.</p>
+            </div>
+        <% } else { %>
+            <% pendingComments.forEach(comment => { %>
+                <div class="queue-item" id="comment-<%= comment.id %>">
+                    <div class="queue-item-header">
+                        <img src="<%= comment.User.profilePic || '/images/default.png' %>" alt="Profile" class="user-avatar">
+                        <div class="user-info">
+                            <h3><%= comment.User.username %></h3>
+                            <p><%= comment.User.fullname %></p>
+                            <div class="timestamp">Submitted: <%= new Date(comment.createdAt).toLocaleString() %></div>
+                        </div>
+                    </div>
+                    <div class="queue-item-content">
+                        <div class="comment-post-ref">
+                            <strong>Post:</strong> <%= comment.Post ? comment.Post.title : 'Post #' + comment.postId %>
+                        </div>
+                        <p><%= comment.content %></p>
+                    </div>
+                    <div class="queue-item-actions">
+                        <button class="btn btn-approve" onclick="approveComment('<%= comment.id %>')">✓ Approve</button>
+                        <button class="btn btn-reject" onclick="rejectComment('<%= comment.id %>')">✗ Reject</button>
+                    </div>
+                </div>
+            <% }); %>
+        <% } %>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function approvePost(postId) {
+            if (!confirm('Are you sure you want to approve this post?')) return;
+            
+            try {
+                const response = await fetch(`/admin/api/posts/${postId}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById(`post-${postId}`).remove();
+                    updateStats();
+                } else {
+                    alert('Error approving post: ' + data.message);
+                }
+            } catch (error) {
+                alert('Error approving post: ' + error.message);
+            }
+        }
+
+        async function rejectPost(postId) {
+            if (!confirm('Are you sure you want to reject this post? This action cannot be undone.')) return;
+            
+            try {
+                const response = await fetch(`/admin/api/posts/${postId}/reject`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById(`post-${postId}`).remove();
+                    updateStats();
+                } else {
+                    alert('Error rejecting post: ' + data.message);
+                }
+            } catch (error) {
+                alert('Error rejecting post: ' + error.message);
+            }
+        }
+
+        async function approveComment(commentId) {
+            if (!confirm('Are you sure you want to approve this comment?')) return;
+            
+            try {
+                const response = await fetch(`/admin/api/comments/${commentId}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById(`comment-${commentId}`).remove();
+                    updateStats();
+                } else {
+                    alert('Error approving comment: ' + data.message);
+                }
+            } catch (error) {
+                alert('Error approving comment: ' + error.message);
+            }
+        }
+
+        async function rejectComment(commentId) {
+            if (!confirm('Are you sure you want to reject this comment? This action cannot be undone.')) return;
+            
+            try {
+                const response = await fetch(`/admin/api/comments/${commentId}/reject`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById(`comment-${commentId}`).remove();
+                    updateStats();
+                } else {
+                    alert('Error rejecting comment: ' + data.message);
+                }
+            } catch (error) {
+                alert('Error rejecting comment: ' + error.message);
+            }
+        }
+
+        function updateStats() {
+            // Reload page to update stats
+            setTimeout(() => {
+                location.reload();
+            }, 500);
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>G24</title>
+  <!-- Preload the logo so it appears crisply -->
+  <link rel="preload" href="/images/logo.jpg" as="image">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      /* Instagram‑style gradient */
+      background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+
+    #splash-container {
+      text-align: center;
+      color: white;
+    }
+
+    .splash-logo {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      animation: pulse 1.6s infinite ease-in-out;
+      transition: box-shadow 0.3s;
+    }
+    .splash-logo:hover {
+      box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+    }
+
+    @keyframes pulse {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    .splash-loader {
+      width: 50px;
+      height: 50px;
+      margin: 30px auto 0;
+      border-radius: 50%;
+      background: conic-gradient(
+        rgba(255,255,255,0.4) 0%,
+        rgba(255,255,255,0.4) 60%,
+        rgba(255,255,255,0.9) 60%,
+        rgba(255,255,255,0.9) 100%
+      );
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Optional: Fade out before redirect */
+    #splash-container.fade-out {
+      animation: fadeOut 0.8s forwards;
+    }
+    @keyframes fadeOut {
+      to { opacity: 0; transform: scale(0.95); }
+    }
+  </style>
+</head>
+<body>
+  <div id="splash-container">
+    <img src="/images/logo.jpg" class="splash-logo" alt="G24 Logo">
+    <div class="splash-loader"></div>
+  </div>
+
+  <script>
+    // Determine where to go next
+    const redirectUrl = '<%= typeof redirectUrl !== "undefined" ? redirectUrl : "/feed" %>';
+    const splashDuration = 6000;
+    const start = Date.now();
+    const container = document.getElementById('splash-container');
+
+    // Preload the next page document
+    const linkDoc = document.createElement('link');
+    linkDoc.rel = 'preload';
+    linkDoc.href = redirectUrl;
+    linkDoc.as = 'document';
+    document.head.appendChild(linkDoc);
+
+    function go() {
+      // Fade out animation
+      container.classList.add('fade-out');
+      setTimeout(() => {
+        window.location.href = redirectUrl;
+      }, 5000);
+    }
+
+    // Ensure splash stays up for the minimum time
+    setTimeout(() => {
+      const elapsed = Date.now() - start;
+      if (elapsed >= splashDuration) {
+        go();
+      } else {
+        setTimeout(go, splashDuration - elapsed);
+      }
+    }, splashDuration);
+
+    // If main page loads before timeout
+    window.addEventListener('load', () => {
+      const elapsed = Date.now() - start;
+      if (elapsed >= splashDuration) {
+        go();
+      }
+    });
+  </script>
+</body>
+</html>

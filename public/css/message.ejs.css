@@ -1,0 +1,155 @@
+/* -------------------------- */
+/* Global Styles & Body       */
+/* -------------------------- */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  transition: background 0.3s, color 0.3s;
+}
+
+.light-mode {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.dark-mode {
+  background: #121212;
+  color: #fff;
+}
+
+/* -------------------------- */
+/* Main Container & Layout    */
+/* -------------------------- */
+/* Leave room for a thinner sidebar (assumed to be 60px wide) */
+.main-container {
+  margin-left: 60px;
+  padding: 20px;
+}
+
+/* Page Title */
+.page-title {
+  margin: 10px 0 20px;
+  text-align: center;
+  font-size: 26px;
+}
+
+/* -------------------------- */
+/* Chat List Container        */
+/* -------------------------- */
+.chat-list {
+  max-width: 600px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  overflow-y: auto;
+  max-height: calc(100vh - 150px);
+  padding: 10px;
+}
+
+.dark-mode .chat-list {
+  background: #1c1c1c;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+/* -------------------------- */
+/* Chat User Item             */
+/* -------------------------- */
+.chat-user {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 12px 10px;
+  border-bottom: 1px solid #ddd;
+  transition: background-color 0.3s;
+}
+
+.chat-user:last-child {
+  border-bottom: none;
+}
+
+.chat-user:hover {
+  background-color: #f0f0f0;
+}
+
+.dark-mode .chat-user:hover {
+  background-color: #2c2c2c;
+}
+
+/* Chat User Image & Online Indicator */
+.chat-user-img {
+  position: relative;
+  display: inline-block;
+  margin-right: 12px;
+}
+
+.chat-user-img img {
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border: 2px solid #007bff;
+}
+
+.online-indicator {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 12px;
+  height: 12px;
+  background: #44c767; /* green for online */
+  border: 2px solid #fff;
+  border-radius: 50%;
+  display: none;
+}
+
+/* Chat Username */
+.chat-username {
+  flex-grow: 1;
+  text-decoration: none;
+  color: inherit;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+/* Unread Message Badge */
+.unread-badge {
+  background: #ff4d4d;
+  color: #fff;
+  border-radius: 50%;
+  padding: 4px 8px;
+  font-size: 0.8em;
+  position: absolute;
+  top: 10px;
+  right: 15px;
+}
+
+/* -------------------------- */
+/* Responsive Adjustments     */
+/* -------------------------- */
+@media (max-width: 768px) {
+  .main-container {
+    margin-left: 0;
+    padding: 10px;
+  }
+  
+  .chat-list {
+    max-width: 100%;
+    max-height: calc(100vh - 100px);
+  }
+  
+  .chat-user img {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .chat-username {
+    font-size: 1em;
+  }
+  
+  .unread-badge {
+    font-size: 0.7em;
+    padding: 3px 6px;
+  }
+}
