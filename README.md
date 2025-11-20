@@ -1,113 +1,94 @@
-# cybersec connect (Legacy Version)
-> **⚠️ Legacy Code**  
-> This is the very old codebase (pre-current version) for www.g24sec.space.  
-> It is provided here for historical/reference purposes and may not receive updates.
+# Cybersec Connect
+
+A Node.js/Express web application for cybersecurity enthusiasts. Handles user authentication, media uploads, news feeds, AI integrations, and more.
 
 ---
 
 ## 🚀 Overview
 
-A Node.js/Express web application powering g24sec.space.  
-Handles user authentication (Google & GitHub), media uploads, news feeds, AI integrations, and more.
+This is a Node.js/Express web application that provides a platform for cybersecurity professionals and enthusiasts to connect, share information, and collaborate. It features email-based authentication, image uploads, news aggregation, and AI-powered tools.
 
 ---
 
 ## 📦 Features
 
-- OAuth login with **Google** & **GitHub**  
-- Session management & JWT-based APIs  
-- Image uploads & transformations via **ImageKit**  
-- News aggregation (optional - NewsAPI can be configured)  
-- Email notifications via **SMTP** (supports any provider - Brevo, Gmail, SendGrid, etc.)  
-- AI integrations via **Hugging Face** (free tier available)
-- Security entity extraction using **CyberSecBERT** model
+- **Email-based authentication:** Secure user authentication with email verification and password reset.
+- **Session management:** JWT-based APIs for secure and scalable session management.
+- **Image uploads:** Image uploads and transformations via ImageKit.
+- **News aggregation:** Optional news aggregation with NewsAPI.
+- **Email notifications:** SMTP support for email notifications (Brevo, Gmail, SendGrid, etc.).
+- **AI integrations:** Hugging Face integration for AI-powered features.
+- **Security entity extraction:** CyberSecBERT model for extracting security entities from text.
 
 ---
 
 ## 📋 Prerequisites
 
-- **Node.js** (>= 18.x) & **npm**  
-- **PostgreSQL**  
-- OAuth apps registered for:
-  - **Google** (CLIENT_ID & CLIENT_SECRET)  
-  - **GitHub** (CLIENT_ID & CLIENT_SECRET)  
+- **Node.js** (>= 18.x) & **npm**
+- **PostgreSQL**
 - Accounts / API keys for:
-  - **SMTP Email Service** (optional - Brevo, Gmail, SendGrid, etc.)  
-  - **ImageKit**  
-  - **Hugging Face** (optional - free tier available for AI)
+  - **SMTP Email Service** (optional)
+  - **ImageKit**
+  - **Hugging Face** (optional)
 
 ---
 
 ## ⚙️ Setup & Deployment
 
-1. **Clone the repository**  
-   ```bash
-   git clone https://github.com/Kyle6012/g24sec-space-legacy.git
-   cd g24sec-space-legacy
-   ```
-2. **Install dependecies**
-   ```bash
-   npm install
-   ```
-3. **Configure Environment**
-   
-   Create a `.env` file in the root directory based on `.env.example`:
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Then edit `.env` and fill in all required values:
-   - **Database:** Configure PostgreSQL connection details
-   - **OAuth:** Register apps with Google & GitHub to get CLIENT_ID and CLIENT_SECRET
-   - **Services:** Sign up for accounts and get API keys:
-     - [ImageKit](https://imagekit.io) - Image uploads & CDN
-     - **SMTP Email** (optional) - Configure SMTP settings for email notifications:
-       - Default: [Brevo](https://www.brevo.com) (smtp-relay.brevo.com)
-       - Or use: Gmail, SendGrid, Mailgun, etc.
-     - [Hugging Face](https://huggingface.co/settings/tokens) - AI integration (optional, free tier available)
-   - **Secrets:** Generate strong random values for `SESSION_SECRET` and `JWT_SECRET`
-     ```bash
-     # Generate secrets (Linux/Mac)
-     openssl rand -base64 32
-     
-     # Or use Node.js
-     node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
-     ```
-   
-4. **Start server**
-   ```bash
-   npm start
-   ```
-5. **Access**
-   Open your browser at localhost:3000 (or your configured BASE_URL).
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/your-username/cybersec-connect.git
+    cd cybersec-connect
+    ```
+2.  **Install dependencies**
+    ```bash
+    npm install
+    ```
+3.  **Configure PostgreSQL**
+    - Install PostgreSQL on your machine.
+    - Create a new database and a user with a password.
+    - Grant the user privileges to the database.
+4.  **Configure Environment**
+    - Create a `.env` file from the `.env.example`:
+      ```bash
+      cp .env.example .env
+      ```
+    - Edit the `.env` file and fill in the required values:
+      - **Database:** Configure the PostgreSQL connection details.
+      - **Services:** Sign up for accounts and get API keys for ImageKit, SMTP, and Hugging Face.
+      - **Secrets:** Generate strong random values for `SESSION_SECRET` and `JWT_SECRET`.
+5.  **Run Migrations**
+    ```bash
+    npm run migrate
+    ```
+6.  **Start server**
+    ```bash
+    npm start
+    ```
+7.  **Access**
+    Open your browser at `http://localhost:3000` (or your configured `BASE_URL`).
 
-## ☁️ Deployment tips
-   - Any Node-capable host (Heroku, Vercel, DigitalOcean, etc.) will work.
+---
 
-   - Push to your Git provider, connect the repo in your host dashboard, and mirror the same ENV variables in the host’s settings.
+## ☁️ Deployment
 
-   - On deploy, the host will run npm install & npm start automatically.
+This application is configured for deployment on Vercel. The `vercel.json` file in the root directory contains the necessary configuration. To deploy, simply connect your Git repository to Vercel and the deployment will be handled automatically.
 
+---
 
 ## 🤝 Contributing
 
-1. Fork & clone
+Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
 
-2. Create a feature branch
-
-3. Commit & push
-
-4. Open a pull request
-
-Please note this is legacy code; contributions may not be merged into the current mainline.
+---
 
 ## 🔒 Security
 
-- Do not commit your `.env` or any secret keys to GitHub.
-
+- Do not commit your `.env` file or any secret keys to GitHub.
 - Rotate credentials regularly.
+- Use strong, unique values for `SESSION_SECRET` and `JWT_SECRET`.
 
-- Use strong, unique values for `SESSION_SECRET` & `JWT_SECRET`.
+---
 
 ## 🤖 AI Integration
 
@@ -213,7 +194,3 @@ npm run setup-ai
 3. Start the server and navigate to the chat interface
 
 4. Find and message the "g24_ai" user to start chatting with the AI assistant
-
-## 📑 License
-This project is released under the Apache-2.0 license.
-

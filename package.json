@@ -14,6 +14,7 @@
     "test": "jest",
     "start": "node server.mjs",
     "dev": "nodemon server.mjs",
+    "build": "npm install",
     "setup-ai": "node scripts/setup-ai-user.mjs",
     "setup-huggingface": "node scripts/setup-huggingface.mjs"
   },
@@ -44,8 +45,6 @@
     "nodemon": "^3.1.10",
     "open-graph-scraper": "^6.9.0",
     "passport": "^0.7.0",
-    "passport-github2": "^0.1.12",
-    "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.13.1",
     "pg-hstore": "^2.3.4",

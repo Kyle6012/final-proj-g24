@@ -30,14 +30,6 @@ const User = sqz.define("User", {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    googleId: {
-        type: DataTypes.STRING,
-        unique: true,
-    },
-    githubId: {
-        type: DataTypes.STRING,
-        unique: true,
-    },
     profilePic: {
         type: DataTypes.STRING, // imagekit url for profile image
         defaultValue: '',
