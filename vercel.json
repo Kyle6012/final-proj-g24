@@ -2,14 +2,20 @@
   "version": 2,
   "builds": [
     {
-      "src": "server.mjs",
+      "src": "api/index.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "server.mjs"
+      "dest": "api/index.js"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/daily-alerts",
+      "schedule": "0 9 * * *"
     }
   ]
 }

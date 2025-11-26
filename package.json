@@ -11,7 +11,7 @@
   "type": "module",
   "main": "server.mjs",
   "scripts": {
-    "test": "jest",
+    "test": "DISABLE_EMAIL=true jest",
     "start": "node server.mjs",
     "dev": "nodemon server.mjs",
     "build": "npm install",
@@ -29,6 +29,7 @@
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.3",
     "connect-flash": "^0.1.1",
+    "connect-pg-simple": "^10.0.0",
     "cookie": "^1.0.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -48,8 +49,8 @@
     "passport-jwt": "^4.0.1",
     "pg": "^8.16.3",
     "pg-hstore": "^2.3.4",
+    "pusher": "^5.2.0",
     "sequelize": "^6.37.5",
-    "socket.io": "^4.8.1",
     "url": "^0.11.4",
     "uuid": "^11.0.5"
   }

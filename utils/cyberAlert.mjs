@@ -1,6 +1,6 @@
 import axios from 'axios';
 import User from '../models/User.mjs';
-import { sendCyberAlertEmail } from './emailService.mjs';
+
 
 // fetch cve alerts 
 const fetchCVEAlerts = async () => {
@@ -20,8 +20,8 @@ const fetchCyberNews = async () => {
         console.log("NewsAPI key not provided, skipping news fetch");
         return [];
     }
-    
-    try{
+
+    try {
         const response = await axios.get(`https://newsapi.org/v2/top-headlines?category=technology&q=cybersecurity&apiKey=${process.env.NEWS_API_KEY}`);
         return response.data.articles.slice(0, 5); // top 5 news articles
     } catch (e) {
@@ -31,12 +31,12 @@ const fetchCyberNews = async () => {
 };
 
 // send alerts via email
+// send alerts via email
 export const sendCyberAlerts = async () => {
-    const users = await User.findAll({ where: { isVerified: true } });
+    console.log("Cyber alerts check initiated (Email alerts disabled).");
+    // We still fetch data just to ensure the APIs are working, or we could skip it.
+    // For now, let's just log.
     const cveAlerts = await fetchCVEAlerts();
     const cyberNews = await fetchCyberNews();
-
-    for (const user of users) {
-        await sendCyberAlertEmail(user.email, cveAlerts, cyberNews);
-    }
+    console.log(`Fetched ${cveAlerts.length} CVE alerts and ${cyberNews.length} news articles.`);
 };

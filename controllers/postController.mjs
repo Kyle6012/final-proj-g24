@@ -5,12 +5,13 @@ import Community from '../models/Community.mjs';
 import CommunityMember from '../models/CommunityMember.mjs';
 import path from 'path';
 import { FileId } from '../utils/file.mjs';
+import pusher from '../config/pusher.mjs';
 
 export const createPost = async (req, res) => {
     const { title, content, communityId } = req.fields;
     const userId = req.user.id;
     let mediaUrl = null, mediaType = null;
-    
+
     // If community is specified, verify it exists and user is a member
     if (communityId) {
         try {
@@ -18,12 +19,12 @@ export const createPost = async (req, res) => {
             if (!community) {
                 return res.status(404).json({ message: "Community not found" });
             }
-            
+
             // Check if user is a member of the community
             const membership = await CommunityMember.findOne({
                 where: { userId, communityId }
             });
-            
+
             if (!membership && community.isPrivate) {
                 return res.status(403).json({ message: "You must be a member to post in this community" });
             }
@@ -66,14 +67,26 @@ export const createPost = async (req, res) => {
 
     try {
         const newPost = await Post.create({
-            userId, 
-            title, 
-            content, 
-            mediaUrl, 
-            mediaType, 
+            userId,
+            title,
+            content,
+            mediaUrl,
+            mediaType,
             communityId: communityId || null,
             "status": "approved"
         });
+
+        // Trigger Pusher event
+        if (pusher) {
+            const completePost = await Post.findByPk(newPost.id, {
+                include: [{
+                    model: (await import('../models/User.mjs')).default,
+                    attributes: ['id', 'username', 'fullname', 'profilePic']
+                }]
+            });
+            pusher.trigger('feed', 'new-post', completePost);
+        }
+
         res.status(201).json({ message: "Post created successfully", post: newPost });
     } catch (e) {
         res.status(500).json({ message: "Error creating post", error: e.message });
@@ -144,7 +157,7 @@ export const deletePost = async (req, res) => {
             try {
                 const fileId = FileId(post.mediaUrl); //extract file id from url
                 console.log(post.mediaUrl);
-                console.log("file id is: ",fileId);
+                console.log("file id is: ", fileId);
                 await imagekit.deleteFile(fileId);
                 console.log(`File with ID ${fileId} deleted from ImageKit.`);
             } catch (e) {
@@ -153,12 +166,13 @@ export const deletePost = async (req, res) => {
         }
 
         await post.destroy();
-        
+
         // Emit WebSocket event for real-time update
-        if (res.io) {
-            res.io.emit('postDeleted', postId);
+        // Trigger Pusher event for real-time update
+        if (pusher) {
+            pusher.trigger('feed', 'post-deleted', postId);
         }
-        
+
         // Send response based on request type
         if (req.xhr || req.headers.accept.indexOf('json') > -1) {
             res.json({ message: "Post deleted successfully" });

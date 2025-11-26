@@ -1,196 +1,221 @@
-# Cybersec Connect
+# PLP - Final Year Project
 
-A Node.js/Express web application for cybersecurity enthusiasts. Handles user authentication, media uploads, news feeds, AI integrations, and more.
+A comprehensive social platform developed as a Final Year Project on PLP, featuring user authentication, community engagement, real-time features, and AI-powered content moderation.
 
----
+## ✨ Features
 
-## 🚀 Overview
+- **User Authentication**: Secure login and signup (auto-verified, no email required)
+- **Social Feed**: Create posts, like, and comment in real-time
+- **Communities**: Join and participate in interest-based communities
+- **Real-time Features**: Instant messaging, notifications, and live updates powered by Pusher
+- **AI Integration**: AI-powered content moderation and chat features
+- **Image Uploads**: Secure image hosting with ImageKit
+- **Content Moderation**: Automated screening with Perspective API
 
-This is a Node.js/Express web application that provides a platform for cybersecurity professionals and enthusiasts to connect, share information, and collaborate. It features email-based authentication, image uploads, news aggregation, and AI-powered tools.
+## 🚀 Tech Stack
 
----
-
-## 📦 Features
-
-- **Email-based authentication:** Secure user authentication with email verification and password reset.
-- **Session management:** JWT-based APIs for secure and scalable session management.
-- **Image uploads:** Image uploads and transformations via ImageKit.
-- **News aggregation:** Optional news aggregation with NewsAPI.
-- **Email notifications:** SMTP support for email notifications (Brevo, Gmail, SendGrid, etc.).
-- **AI integrations:** Hugging Face integration for AI-powered features.
-- **Security entity extraction:** CyberSecBERT model for extracting security entities from text.
-
----
-
-## 📋 Prerequisites
-
-- **Node.js** (>= 18.x) & **npm**
-- **PostgreSQL**
-- Accounts / API keys for:
-  - **SMTP Email Service** (optional)
-  - **ImageKit**
-  - **Hugging Face** (optional)
+- **Backend**: Node.js, Express.js
+- **Database**: PostgreSQL (Neon DB for production)
+- **ORM**: Sequelize
+- **Real-time**: Pusher (serverless-compatible WebSockets)
+- **Authentication**: JWT + Session-based auth
+- **Deployment**: Vercel Serverless Functions
+- **File Storage**: ImageKit
 
 ---
 
-## ⚙️ Setup & Deployment
+## 📦 Local Development
 
-1.  **Clone the repository**
-    ```bash
-    git clone https://github.com/your-username/cybersec-connect.git
-    cd cybersec-connect
-    ```
-2.  **Install dependencies**
-    ```bash
-    npm install
-    ```
-3.  **Configure PostgreSQL**
-    - Install PostgreSQL on your machine.
-    - Create a new database and a user with a password.
-    - Grant the user privileges to the database.
-4.  **Configure Environment**
-    - Create a `.env` file from the `.env.example`:
-      ```bash
-      cp .env.example .env
-      ```
-    - Edit the `.env` file and fill in the required values:
-      - **Database:** Configure the PostgreSQL connection details.
-      - **Services:** Sign up for accounts and get API keys for ImageKit, SMTP, and Hugging Face.
-      - **Secrets:** Generate strong random values for `SESSION_SECRET` and `JWT_SECRET`.
-5.  **Run Migrations**
-    ```bash
-    npm run migrate
-    ```
-6.  **Start server**
-    ```bash
-    npm start
-    ```
-7.  **Access**
-    Open your browser at `http://localhost:3000` (or your configured `BASE_URL`).
+### Prerequisites
+- Node.js (v18+)
+- PostgreSQL (local installation)
 
----
+### Installation
 
-## ☁️ Deployment
+1. **Clone the repository**:
+   ```bash
+   git clone <repository-url>
+   cd <project-directory>
+   npm install
+   ```
 
-This application is configured for deployment on Vercel. The `vercel.json` file in the root directory contains the necessary configuration. To deploy, simply connect your Git repository to Vercel and the deployment will be handled automatically.
+2. **Set up local database**:
+   ```bash
+   # Create PostgreSQL database
+   createdb g24sec
+   ```
 
----
+3. **Configure environment**:
+   Create a `.env` file in the root directory:
+   ```env
+   # Database
+   DB_NAME=g24sec
+   DB_USER=postgres
+   DB_PASSWORD=your_password
+   DB_HOST=localhost
+   DB_PORT=5432
 
-## 🤝 Contributing
+   # Auth
+   SESSION_SECRET=your_session_secret_here
+   JWT_SECRET=your_jwt_secret_here
 
-Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
+   # Pusher (get free credentials at pusher.com)
+   PUSHER_APP_ID=your_app_id
+   PUSHER_KEY=your_key
+   PUSHER_SECRET=your_secret
+   PUSHER_CLUSTER=your_cluster
 
----
+   # ImageKit (for image uploads)
+   IMAGEKIT_PUBLIC_KEY=your_public_key
+   IMAGEKIT_PRIVATE_KEY=your_private_key
+   IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/your_endpoint
+   ```
 
-## 🔒 Security
-
-- Do not commit your `.env` file or any secret keys to GitHub.
-- Rotate credentials regularly.
-- Use strong, unique values for `SESSION_SECRET` and `JWT_SECRET`.
+4. **Start the development server**:
+   ```bash
+   npm run dev
+   ```
+   Server runs on `http://localhost:3000`
 
 ---
 
-## 🤖 AI Integration
+## 🌐 Production Deployment (Vercel)
 
-The platform includes two AI-powered features:
+### Step 1: Set Up Neon Database
 
-### 1. G24Sec AI Chat Assistant
+1. Create a database at [neon.tech](https://neon.tech) (free tier available)
+2. Copy your `DATABASE_URL` connection string
+3. Run the schema setup:
+   ```bash
+   psql "your_neon_database_url" -f schema.sql
+   ```
+   This creates all required tables automatically.
 
-A cybersecurity-focused AI assistant that can answer questions and provide guidance on security topics. The assistant is powered by Hugging Face models and includes:
+### Step 2: Deploy to Vercel
 
-- Primary model: Configurable via `HUGGINGFACE_MODEL` environment variable
-- Fallback model: Automatically used if the primary model fails
-- Robust error handling and retry logic
-- Specialized cybersecurity knowledge
+1. **Push to GitHub**:
+   ```bash
+   git push origin main
+   ```
 
-### 2. Security Entity Extraction
+2. **Import to Vercel**:
+   - Go to [vercel.com](https://vercel.com)
+   - Click "Add New Project"
+   - Import your GitHub repository
 
-A tool powered by a Named Entity Recognition (NER) model that can identify security-related entities in text.
+3. **Configure Environment Variables**:
+   
+   **Required**:
+   ```env
+   DATABASE_URL=postgresql://user:password@host.neon.tech/dbname?sslmode=require
+   SESSION_SECRET=strong_random_secret_here
+   JWT_SECRET=another_strong_secret_here
+   PUSHER_APP_ID=your_pusher_app_id
+   PUSHER_KEY=your_pusher_key
+   PUSHER_SECRET=your_pusher_secret
+   PUSHER_CLUSTER=your_pusher_cluster
+   CRON_SECRET=secret_for_cron_jobs
+   IMAGEKIT_PUBLIC_KEY=your_imagekit_public_key
+   IMAGEKIT_PRIVATE_KEY=your_imagekit_private_key
+   IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/your_id
+   ```
 
-### Features
+   **Optional** (for enhanced features):
+   ```env
+   HUGGINGFACE_API_KEY=your_key
+   PERSPECTIVE_API_KEY=your_key
+   NEWS_API_KEY=your_key
+   ```
 
-- Extract security entities from logs, threat reports, and other text
-- Identifies entities such as:
-  - IP addresses
-  - Domain names
-  - CVE identifiers
-  - Malware names
-  - File hashes
-  - URLs
-  - Port numbers
-  - And more
+4. **Deploy**:
+   ```bash
+   vercel --prod
+   ```
 
-### Usage
+### Step 3: Verify Deployment
 
-1. Navigate to `/ai/entity-extraction` in the application
-2. Paste your security text into the input field
-3. Click "Extract Entities"
-4. View the categorized results
+- ✅ Visit your Vercel URL
+- ✅ Test signup and login
+- ✅ Test real-time features (posts, messages)
+- ✅ Check Pusher dashboard for connection stats
 
-### API Endpoint
+---
 
-You can also use the API endpoint directly:
+## 📁 Project Structure
+
+```
+├── api/                    # Vercel serverless entry point
+├── config/                 # Database, Pusher, ImageKit configs
+├── controllers/            # Business logic
+├── models/                 # Sequelize database models
+├── routes/                 # API route definitions
+├── middleware/             # Authentication, validation
+├── public/                 # Static assets (CSS, JS, images)
+├── views/                  # EJS templates
+├── utils/                  # Helper functions
+├── schema.sql              # Database schema for Neon DB
+└── vercel.json             # Vercel deployment config
+```
+
+---
+
+## 🗄️ Database Schema
+
+The application uses the following tables:
+- **Users**: User accounts and profiles
+- **Posts**: Social media posts
+- **Comments**: Post comments
+- **Likes**: Post likes
+- **Messages**: Direct messages
+- **Notifications**: Real-time notifications
+- **Communities**: Interest-based groups
+- **CommunityMembers**: Community membership
+- **Follows**: User follow relationships
+- **Admins**: Admin accounts
+- **session**: Session storage (connect-pg-simple)
+
+All tables are created automatically using `schema.sql`.
+
+---
+
+## 🔧 Configuration Notes
+
+### Pusher Setup
+Real-time features use Pusher instead of Socket.IO for serverless compatibility:
+- **Free Tier**: 200k messages/day, 100 concurrent connections
+- **Channels**: `feed`, `post-{id}`, `user-{id}`
+- Sign up at [pusher.com](https://pusher.com)
+
+### Database
+- **Production**: Neon DB (serverless PostgreSQL)
+- **Local**: Standard PostgreSQL
+- Tables auto-created via `schema.sql`
+
+### Image Uploads
+- Uses ImageKit CDN
+- Free tier: 20GB bandwidth/month
+- Sign up at [imagekit.io](https://imagekit.io)
+
+---
+
+## 🛠️ Scripts
 
 ```bash
-POST /ai/extract-entities
-Content-Type: application/json
-
-{
-  "text": "Your security text here..."
-}
+npm run dev          # Start development server
+npm test             # Run tests
+npm start            # Start production server (local)
+node schema.sql      # Set up database (via psql)
+node setup-production-db.mjs  # Alternative DB setup
 ```
 
-Response format:
+---
 
-```json
-{
-  "entities": {
-    "ipAddresses": ["192.168.1.1", "10.0.0.1"],
-    "domains": ["malicious-domain.com"],
-    "cves": ["CVE-2023-1234"],
-    "malware": ["Emotet"],
-    "hashes": ["5f4dcc3b5aa765d61d8327deb882cf99"],
-    "urls": ["https://malicious-site.com/payload"],
-    "ports": ["445"],
-    "other": [{"type": "tool", "value": "mimikatz"}]
-  }
-}
-```
+## 📝 License
 
-### Configuration
+This project was developed as a Final Year Project for PLP.
 
-The CyberSecBERT model can be configured in your `.env` file:
+---
 
-```
-# Primary AI model for chat
-HUGGINGFACE_MODEL=meta-llama/Llama-3.2-3B-Instruct
-HUGGINGFACE_API_KEY=your_huggingface_api_key
+## 🤝 Support
 
-# Optional fallback model (used if primary model fails)
-# FALLBACK_MODEL=microsoft/Phi-3-mini-4k-instruct
-
-# Entity extraction model
-CYBERSECBERT_MODEL=dslim/bert-base-NER
-```
-
-You can use other models from Hugging Face that support the required functionality.
-
-### Setting Up the AI Integration
-
-To set up the AI integration, follow these steps:
-
-1. Get a Hugging Face API key from [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
-
-2. Run the setup scripts:
-
-```bash
-# Configure Hugging Face API and model selection
-npm run setup-huggingface
-
-# Create the G24 AI user in the database
-npm run setup-ai
-```
-
-3. Start the server and navigate to the chat interface
-
-4. Find and message the "g24_ai" user to start chatting with the AI assistant
+For issues or questions, please open an issue in the GitHub repository.
