@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Your updated navbar.css -->
+  <link rel="stylesheet" href="/css/navbar.css">
+  <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+  <script>
+    window.PUSHER_KEY = '<%= process.env.PUSHER_KEY %>';
+    window.PUSHER_CLUSTER = '<%= process.env.PUSHER_CLUSTER %>';
+  </script>
+</head>
+
+<body>
+  <!-- Bottom Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-icons">
+      <!-- Profile -->
+      <a href="/profile/<%= user.username %>" title="Profile">
+        <img src="<%= user.profilePic || '/images/default.png' %>" alt="Profile" class="profile-pic">
+      </a>
+
+      <!-- Home -->
+      <a href="/feed" title="Home">
+        <i class="fas fa-home"></i>
+      </a>
+
+      <!-- Communities -->
+      <a href="/communities" title="Communities">
+        <i class="fas fa-users"></i>
+      </a>
+
+      <!-- Search -->
+      <a href="javascript:void(0)" onclick="toggleSearch()" title="Search">
+        <i class="fas fa-search"></i>
+      </a>
+
+      <!-- Chat -->
+      <a href="/user/message" title="Chat">
+        <i class="fas fa-comment"></i>
+        <% if (typeof unreadCount !=='undefined' && unreadCount> 0) { %>
+          <span class="unread-dot">
+            <%= unreadCount %>
+          </span>
+          <% } %>
+      </a>
+
+      <!-- Notifications -->
+      <a href="/notifications" title="Notifications" id="notificationLink">
+        <i class="fas fa-bell"></i>
+        <span id="notificationCount" class="unread-dot" style="display: none;">0</span>
+      </a>
+
+      <!-- Security Entity Extraction Tool -->
+      <a href="/ai/entity-extraction" title="Security Entity Extraction">
+        <i class="fas fa-shield-alt"></i>
+      </a>
+
+      <!-- Dark Mode Toggle -->
+      <a href="javascript:void(0)" onclick="toggleDarkMode()" title="Toggle Dark Mode">
+        <i id="darkModeIcon" class="fas fa-moon"></i>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Search Overlay -->
+  <div id="searchTab" class="search-container hidden">
+    <i class="fas fa-arrow-left back-icon" title="Back" onclick="toggleSearch()"></i>
+    <form action="/search" method="GET" class="search-form">
+      <input type="text" name="q" placeholder="Search..." autocomplete="on">
+      <button type="submit"><i class="fas fa-search"></i></button>
+    </form>
+  </div>
+
+  <script>
+    // Apply stored theme on load
+    document.addEventListener("DOMContentLoaded", () => {
+      const theme = localStorage.getItem('theme') || 'light-mode';
+      document.documentElement.classList.add(theme);
+      const icon = document.getElementById('darkModeIcon');
+      if (theme === 'dark-mode') icon.classList.replace('fa-moon', 'fa-sun');
+
+      // Fetch notification count
+      fetchNotificationCount();
+
+      // Set up Pusher for real-time notifications
+      setupNotificationPusher();
+    });
+
+    // Fetch unread notification count
+    function fetchNotificationCount() {
+      fetch('/notifications/unread-count')
+        .then(response => response.json())
+        .then(data => {
+          updateNotificationBadge(data.count);
+        })
+        .catch(error => console.error('Error fetching notification count:', error));
+    }
+
+    // Update notification badge
+    function updateNotificationBadge(count) {
+      const badge = document.getElementById('notificationCount');
+      if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.style.display = 'block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    // Set up Pusher for real-time notifications
+    function setupNotificationPusher() {
+      if (typeof Pusher !== 'undefined' && window.PUSHER_KEY) {
+        const pusher = new Pusher(window.PUSHER_KEY, {
+          cluster: window.PUSHER_CLUSTER
+        });
+
+        // Subscribe to user's notification channel
+        // We need the user ID. It's available in the EJS template as user.id
+        const userId = "<%= user.id %>";
+        const channel = pusher.subscribe(`user-${userId}`);
+
+        // Listen for new notifications
+        channel.bind('new-notification', (data) => {
+          // Increment badge count
+          const badge = document.getElementById('notificationCount');
+          const currentCount = parseInt(badge.textContent) || 0;
+          updateNotificationBadge(currentCount + 1);
+
+          // Show notification toast
+          showNotificationToast(data.title, data.message, data.type);
+        });
+
+        // Listen for notification read events
+        channel.bind('notification-read', () => {
+          fetchNotificationCount(); // Refresh count
+        });
+      }
+    }
+
+    // Show notification toast
+    function showNotificationToast(title, message, type) {
+      // Check if toast container exists, if not create it
+      let toastContainer = document.getElementById('toast-container');
+      if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.style.position = 'fixed';
+        toastContainer.style.bottom = '20px';
+        toastContainer.style.right = '20px';
+        toastContainer.style.zIndex = '9999';
+        document.body.appendChild(toastContainer);
+      }
+
+      // Create toast element
+      const toast = document.createElement('div');
+      toast.style.backgroundColor = '#333';
+      toast.style.color = 'white';
+      toast.style.padding = '12px 20px';
+      toast.style.borderRadius = '4px';
+      toast.style.marginTop = '10px';
+      toast.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+      toast.style.minWidth = '250px';
+      toast.style.animation = 'fadeIn 0.5s, fadeOut 0.5s 2.5s';
+      toast.style.animationFillMode = 'forwards';
+
+      // Add title and message
+      toast.innerHTML = `
+        <div style="font-weight: bold; margin-bottom: 5px;">${title}</div>
+        <div style="font-size: 14px;">${message}</div>
+      `;
+
+      // Add to container
+      toastContainer.appendChild(toast);
+
+      // Remove after 3 seconds
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    // Add CSS for toast animations
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes fadeOut {
+        from { opacity: 1; transform: translateY(0); }
+        to { opacity: 0; transform: translateY(-20px); }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Toggle search overlay
+    function toggleSearch() {
+      document.getElementById('searchTab').classList.toggle('hidden');
+    }
+
+    // Toggle dark mode and save preference
+    function toggleDarkMode() {
+      const htmlEl = document.documentElement;
+      htmlEl.classList.toggle('dark-mode');
+      const icon = document.getElementById('darkModeIcon');
+      if (htmlEl.classList.contains('dark-mode')) {
+        icon.classList.replace('fa-moon', 'fa-sun');
+        localStorage.setItem('theme', 'dark-mode');
+      } else {
+        icon.classList.replace('fa-sun', 'fa-moon');
+        localStorage.setItem('theme', 'light-mode');
+      }
+    }
+  </script>
+</body>
+
+</html>

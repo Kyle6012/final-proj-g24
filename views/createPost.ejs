@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Post - G24Sec</title>
+  <!-- Link to the dedicated stylesheet for this page -->
+  <link rel="stylesheet" href="/css/createPost.css">
+  <link rel="stylesheet" href="/css/spcrPost.css">
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    /* Spinner styles if not included in createPost.css */
+    .spinner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      display: none;
+      z-index: 3000;
+    }
+
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+  </style>
+  <script>
+    // On DOM ready, set the theme based on localStorage.
+    document.addEventListener("DOMContentLoaded", function () {
+      // Get theme from localStorage (default to light-mode)
+      const theme = localStorage.getItem('theme') || 'light-mode';
+      document.body.className = theme;
+    });
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>Create a New Post</h1>
+    <!-- Form to create a new post -->
+    <form id="postForm" action="/feed/create" method="POST" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="communityId">Community</label>
+        <select name="communityId" id="communityId">
+          <option value="">General (No specific community)</option>
+          <!-- Community options will be loaded dynamically -->
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="title">Title</label>
+        <input type="text" name="title" id="title" placeholder="Enter a catchy title" required>
+      </div>
+
+      <div class="form-group">
+        <label for="content">Content</label>
+        <textarea name="content" id="content" rows="4" placeholder="Write your post here" required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="file">Upload Image or PDF (Optional)</label>
+        <input type="file" name="file" id="file">
+      </div>
+
+      <button type="submit" id="postButton">Post</button>
+    </form>
+
+    <!-- Modal for success or error message -->
+    <div id="postCreatedModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <p id="postMessage"></p>
+      </div>
+    </div>
+
+    <a href="/feed" class="back-link">Back to Feed</a>
+  </div>
+
+  <!-- Spinner element -->
+  <div id="spinner" class="spinner"></div>
+
+  <!-- Include the createPost.js script for WebSocket functionality -->
+  <script src="/js/createPost.js"></script>
+  
+  <script>
+    // Modal functionality
+    const modal = document.getElementById('postCreatedModal');
+    const modalMessage = document.getElementById('postMessage');
+    const closeModal = document.querySelector('.close');
+    const spinner = document.getElementById('spinner');
+    
+    // Function to show modal with a message
+    function showModal(message, isSuccess) {
+      modalMessage.textContent = message;
+      modalMessage.className = isSuccess ? 'success' : 'error';
+      modal.style.display = "block";
+    }
+    
+    // Close modal when the close element is clicked
+    closeModal.onclick = function() {
+      modal.style.display = "none";
+    }
+    
+    // Close modal when clicking outside of the modal content
+    window.onclick = function(event) {
+      if (event.target === modal) {
+        modal.style.display = "none";
+      }
+    }
+    
+    // Listen for WebSocket events and load communities
+    document.addEventListener('DOMContentLoaded', function() {
+      const socket = io({ withCredentials: true });
+      const communitySelect = document.getElementById('communityId');
+      
+      // Load communities for dropdown
+      async function loadCommunities() {
+        try {
+          const response = await fetch('/communities');
+          if (response.headers.get('content-type').includes('application/json')) {
+            const data = await response.json();
+            
+            if (data.communities && data.communities.length > 0) {
+              // Get communityId from URL if present (for when redirected from community page)
+              const urlParams = new URLSearchParams(window.location.search);
+              const preselectedCommunityId = urlParams.get('communityId');
+              
+              data.communities.forEach(community => {
+                const option = document.createElement('option');
+                option.value = community.id;
+                option.textContent = community.displayName;
+                
+                if (community.id === preselectedCommunityId) {
+                  option.selected = true;
+                }
+                
+                communitySelect.appendChild(option);
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error loading communities:', error);
+        }
+      }
+      
+      // Load communities when page loads
+      loadCommunities();
+      
+      // Handle post success
+      socket.on('postSuccess', function(data) {
+        spinner.style.display = "none";
+        showModal(data.message || "Post created successfully.", true);
+        setTimeout(() => window.location.href = '/feed', 1500);
+      });
+      
+      // Handle errors
+      socket.on('errorMessage', function(data) {
+        spinner.style.display = "none";
+        showModal(data.message || "Failed to create post.", false);
+      });
+    });
+  </script>
+</body>
+</html>

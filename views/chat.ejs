@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Chat with <%= receiver.username %>
+  </title>
+  <link rel="stylesheet" href="/css/chat.ejs.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+  <script src="/js/theme.js"></script>
+  <script src="/js/yt.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    /* Message status styles */
+    .message-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      margin-top: 4px;
+    }
+
+    .timestamp {
+      font-size: 0.75rem;
+      color: #999;
+      margin-right: 5px;
+    }
+
+    .message-status {
+      font-size: 0.75rem;
+      color: #999;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .message-status .seen {
+      color: #3897f0;
+    }
+
+    /* Typing indicator */
+    .typing-indicator {
+      display: none;
+      padding: 8px 12px;
+      margin: 5px;
+      border-radius: 18px;
+      background-color: #f1f1f1;
+      color: #555;
+      font-size: 0.9rem;
+      max-width: 80%;
+      align-self: flex-start;
+    }
+
+    /* Dark mode styles */
+    .dark-mode .typing-indicator {
+      background-color: #333;
+      color: #ddd;
+    }
+
+    .dark-mode .timestamp {
+      color: #aaa;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message-container {
+      animation: fadeIn 0.3s ease-out;
+    }
+  </style>
+</head>
+
+<body class="light-mode">
+  <%- include('partials/navbar') %>
+
+    <div class="chat-container">
+      <!-- Chat Header -->
+      <div class="chat-header">
+        <a href="/profile/<%= receiver.username %>">
+          <img src="<%= receiver.profilePic || '/images/default.png' %>" alt="Profile Picture" class="chat-profile-pic">
+        </a>
+        <h2 class="chat-username">
+          <%= receiver.username %>
+        </h2>
+        <span id="online-status" class="online-indicator"></span>
+      </div>
+
+      <!-- Chat Messages -->
+      <div class="chat-box" id="chat-box">
+        <% messages.forEach(msg=> { %>
+          <div class="message-container <%= msg.senderId === receiver.id ? 'received' : 'sent' %>"
+            data-message-id="<%= msg.id %>">
+            <div class="message">
+              <p class="message-text">
+                <%= msg.message %>
+              </p>
+              <div class="message-footer">
+                <span class="timestamp">
+                  <%= new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit' , minute:'2-digit'}) %>
+                </span>
+                <% if (msg.senderId !==receiver.id) { %>
+                  <span class="message-status">
+                    <% if (msg.isRead) { %>
+                      <span class="seen">✓✓</span>
+                      <% } else { %>
+                        ✓
+                        <% } %>
+                  </span>
+                  <% } %>
+              </div>
+            </div>
+          </div>
+          <% }); %>
+            <div id="typing-indicator" class="typing-indicator">
+              <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+      </div>
+
+      <!-- Message Input -->
+      <form id="chat-form" class="chat-form">
+        <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off" required>
+        <button type="submit" aria-label="Send message">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </form>
+    </div>
+
+    <!-- Audio elements for notifications -->
+    <audio id="msgSentSound" src="/sound/message-sent.mp3" preload="auto"></audio>
+    <audio id="msgIncomingSound" src="/sound/message-incoming.mp3" preload="auto"></audio>
+    <audio id="notificationSound" src="/sound/message-notification.mp3" preload="auto"></audio>
+
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script>
+      // Initialize Pusher
+      const pusher = new Pusher('<%= process.env.PUSHER_KEY %>', {
+        cluster: '<%= process.env.PUSHER_CLUSTER %>'
+      });
+
+      const chatBox = document.getElementById('chat-box');
+      const form = document.getElementById('chat-form');
+      const input = document.getElementById('message-input');
+      const receiverId = "<%= receiver.id %>";
+      const currentUserId = "<%= user.id %>";
+      const typingIndicator = document.getElementById('typing-indicator');
+      const onlineStatus = document.getElementById('online-status');
+
+      // Subscribe to my own channel to receive messages
+      const channel = pusher.subscribe(`user-${currentUserId}`);
+
+      // Scroll to bottom of chat
+      function scrollChatToBottom() {
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+
+      // Check if element is in viewport
+      function isElementInViewport(el) {
+        const rect = el.getBoundingClientRect();
+        return (
+          rect.top >= 0 &&
+          rect.left >= 0 &&
+          rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+          rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+        );
+      }
+
+      // Mark messages as read when they become visible
+      function markVisibleMessagesAsRead() {
+        const messages = document.querySelectorAll('.message-container.received');
+        let hasUnread = false;
+
+        messages.forEach(msg => {
+          if (isElementInViewport(msg) && !msg.dataset.read) {
+            // We can't mark individual messages easily with the bulk API, 
+            // but we can mark the conversation as read.
+            hasUnread = true;
+            msg.dataset.read = "true";
+          }
+        });
+
+        if (hasUnread) {
+          fetch('/user/mark-read', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ senderId: receiverId })
+          }).catch(console.error);
+        }
+      }
+
+      // Handle form submission
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const message = input.value.trim();
+        if (message) {
+          // Optimistic UI update
+          const tempId = 'temp-' + Date.now();
+          const msgContainer = document.createElement('div');
+          msgContainer.classList.add('message-container', 'sent');
+          msgContainer.dataset.tempId = tempId;
+          msgContainer.innerHTML = `
+          <div class="message">
+            <p class="message-text">${message}</p>
+            <div class="message-footer">
+              <span class="timestamp">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              <span class="message-status">✓</span>
+            </div>
+          </div>`;
+
+          chatBox.insertBefore(msgContainer, typingIndicator);
+          scrollChatToBottom();
+          input.value = '';
+
+          try {
+            const response = await fetch('/user/send-message', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ message, receiverId })
+            });
+
+            if (response.ok) {
+              document.getElementById('msgSentSound').play();
+            } else {
+              console.error('Failed to send message');
+              msgContainer.style.opacity = '0.5'; // Indicate failure
+            }
+          } catch (error) {
+            console.error('Error sending message:', error);
+            msgContainer.style.opacity = '0.5';
+          }
+        }
+      });
+
+      // Handle received messages via Pusher
+      channel.bind('new-message', (data) => {
+        // Only display if it's from the person we are chatting with
+        if (data.senderId !== receiverId) return;
+
+        const msgContainer = document.createElement('div');
+        msgContainer.classList.add('message-container', 'received');
+        msgContainer.dataset.messageId = data.id;
+        msgContainer.innerHTML = `
+        <div class="message">
+          <p class="message-text">${data.message}</p>
+          <div class="message-footer">
+            <span class="timestamp">${new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          </div>
+        </div>`;
+
+        chatBox.insertBefore(msgContainer, typingIndicator);
+        scrollChatToBottom();
+
+        document.getElementById('msgIncomingSound').play();
+
+        // Mark as read if visible
+        setTimeout(() => {
+          if (isElementInViewport(msgContainer)) {
+            fetch('/user/mark-read', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ senderId: receiverId })
+            }).catch(console.error);
+          }
+        }, 1000);
+      });
+
+      // Handle message sent confirmation (for multi-tab sync)
+      channel.bind('message-sent', (data) => {
+        // If we sent it from another tab to this receiver, show it
+        if (data.receiverId === receiverId) {
+          // Check if we already have this message (from optimistic UI)
+          // This is tricky without unique IDs from client, but we can skip for now or handle dupes
+          // For now, we assume the optimistic UI handled the current tab.
+        }
+      });
+
+      // Handle message read status updates
+      channel.bind('messages-read', (data) => {
+        if (data.readerId === receiverId) {
+          const statusElements = document.querySelectorAll('.message-status');
+          statusElements.forEach(el => {
+            el.innerHTML = '<span class="seen">✓✓</span>';
+          });
+        }
+      });
+
+      // Mark messages as read when they become visible
+      chatBox.addEventListener('scroll', markVisibleMessagesAsRead);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          markVisibleMessagesAsRead();
+        }
+      });
+
+      // Initial scroll to bottom
+      scrollChatToBottom();
+
+      // Mark all existing messages as read if they're visible
+      setTimeout(() => {
+        markVisibleMessagesAsRead();
+      }, 1000);
+    </script>
+</body>
+
+</html>

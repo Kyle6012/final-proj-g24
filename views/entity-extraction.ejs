@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Security Entity Extraction</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="/js/theme.js"></script>
+  <style>
+    :root {
+      --primary-bg: #f5f5f5;
+      --secondary-bg: #ffffff;
+      --primary-text: #333333;
+      --secondary-text: #666666;
+      --accent-color: #1976d2;
+      --border-color: #e0e0e0;
+      --success-color: #4caf50;
+      --warning-color: #ff9800;
+      --danger-color: #f44336;
+      --info-color: #2196f3;
+    }
+    
+    .dark-mode {
+      --primary-bg: #121212;
+      --secondary-bg: #1e1e1e;
+      --primary-text: #e0e0e0;
+      --secondary-text: #aaaaaa;
+      --border-color: #333333;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--primary-bg);
+      color: var(--primary-text);
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .card {
+      background-color: var(--secondary-bg);
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    h1, h2, h3 {
+      color: var(--accent-color);
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    
+    textarea {
+      width: 100%;
+      min-height: 200px;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background-color: var(--secondary-bg);
+      color: var(--primary-text);
+      font-family: inherit;
+      resize: vertical;
+    }
+    
+    button {
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background-color 0.2s;
+    }
+    
+    button:hover {
+      background-color: #1565c0;
+    }
+    
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    .results {
+      display: none;
+      margin-top: 30px;
+    }
+    
+    .entity-section {
+      margin-bottom: 20px;
+    }
+    
+    .entity-title {
+      font-weight: 500;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .entity-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    
+    .entity-item {
+      background-color: var(--primary-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 14px;
+    }
+    
+    .entity-item.ip { border-left: 3px solid var(--danger-color); }
+    .entity-item.domain { border-left: 3px solid var(--info-color); }
+    .entity-item.cve { border-left: 3px solid var(--warning-color); }
+    .entity-item.malware { border-left: 3px solid var(--danger-color); }
+    .entity-item.hash { border-left: 3px solid var(--success-color); }
+    .entity-item.url { border-left: 3px solid var(--info-color); }
+    .entity-item.port { border-left: 3px solid var(--warning-color); }
+    .entity-item.other { border-left: 3px solid var(--secondary-text); }
+    
+    .loading {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-left-color: var(--accent-color);
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .error-message {
+      color: var(--danger-color);
+      margin-top: 10px;
+      display: none;
+    }
+    
+    .sample-text {
+      margin-top: 20px;
+      font-size: 14px;
+      color: var(--secondary-text);
+    }
+    
+    .sample-button {
+      background-color: transparent;
+      color: var(--accent-color);
+      border: 1px solid var(--accent-color);
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+    
+    .sample-button:hover {
+      background-color: rgba(25, 118, 210, 0.1);
+    }
+    
+    .dark-mode .spinner {
+      border-color: rgba(255, 255, 255, 0.1);
+      border-left-color: var(--accent-color);
+    }
+    
+    .theme-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: transparent;
+      border: none;
+      color: var(--primary-text);
+      cursor: pointer;
+      font-size: 24px;
+      padding: 0;
+    }
+  </style>
+</head>
+<body class="light-mode">
+  <%- include('partials/navbar') %>
+  
+  <button class="theme-toggle" onclick="toggleTheme()">
+    <i class="fas fa-moon"></i>
+  </button>
+
+  <div class="container">
+    <div class="card">
+      <h1>Security Entity Extraction</h1>
+      <p>Extract security-related entities from text using Named Entity Recognition AI model.</p>
+      
+      <div class="form-group">
+        <label for="input-text">Enter text to analyze:</label>
+        <textarea id="input-text" placeholder="Paste your security logs, threat reports, or any text containing security entities..."></textarea>
+      </div>
+      
+      <div class="sample-text">
+        <button class="sample-button" onclick="loadSampleText()">Load Sample Text</button>
+        <small>Click to load a sample threat report for testing</small>
+      </div>
+      
+      <button id="extract-button" onclick="extractEntities()">
+        <i class="fas fa-search"></i> Extract Entities
+      </button>
+      
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <span>Processing... This may take a moment</span>
+      </div>
+      
+      <div class="error-message" id="error-message"></div>
+    </div>
+    
+    <div class="results card" id="results">
+      <h2>Extracted Entities</h2>
+      
+      <div class="entity-section" id="ip-section">
+        <div class="entity-title">
+          <i class="fas fa-network-wired"></i> IP Addresses
+        </div>
+        <ul class="entity-list" id="ip-list"></ul>
+      </div>
+      
+      <div class="entity-section" id="domain-section">
+        <div class="entity-title">
+          <i class="fas fa-globe"></i> Domains
+        </div>
+        <ul class="entity-list" id="domain-list"></ul>
+      </div>
+      
+      <div class="entity-section" id="cve-section">
+        <div class="entity-title">
+          <i class="fas fa-bug"></i> CVEs
+        </div>
+        <ul class="entity-list" id="cve-list"></ul>
+      </div>
+      
+      <div class="entity-section" id="malware-section">
+        <div class="entity-title">
+          <i class="fas fa-virus"></i> Malware
+        </div>
+        <ul class="entity-list" id="malware-list"></ul>
+      </div>
+      
+      <div class="entity-section" id="hash-section">
+        <div class="entity-title">
+          <i class="fas fa-fingerprint"></i> Hashes
+        </div>
+        <ul class="entity-list" id="hash-list"></ul>
+      </div>
+      
+      <div class="entity-section" id="url-section">
+        <div class="entity-title">
+          <i class="fas fa-link"></i> URLs
+        </div>
+        <ul class="entity-list" id="url-list"></ul>
+      </div>
+      
+      <div class="entity-section" id="port-section">
+        <div class="entity-title">
+          <i class="fas fa-plug"></i> Ports
+        </div>
+        <ul class="entity-list" id="port-list"></ul>
+      </div>
+      
+      <div class="entity-section" id="other-section">
+        <div class="entity-title">
+          <i class="fas fa-tags"></i> Other Entities
+        </div>
+        <ul class="entity-list" id="other-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleTheme() {
+      document.body.classList.toggle('dark-mode');
+      const themeIcon = document.querySelector('.theme-toggle i');
+      if (document.body.classList.contains('dark-mode')) {
+        themeIcon.className = 'fas fa-sun';
+        localStorage.setItem('theme', 'dark-mode');
+      } else {
+        themeIcon.className = 'fas fa-moon';
+        localStorage.setItem('theme', 'light-mode');
+      }
+    }
+    
+    // Apply theme from localStorage
+    document.addEventListener('DOMContentLoaded', () => {
+      const theme = localStorage.getItem('theme') || 'light-mode';
+      document.body.className = theme;
+      const themeIcon = document.querySelector('.theme-toggle i');
+      themeIcon.className = theme === 'dark-mode' ? 'fas fa-sun' : 'fas fa-moon';
+    });
+    
+    function loadSampleText() {
+      const sampleText = `THREAT REPORT: Ransomware Campaign Targeting Healthcare Sector
+      
+Date: November 10, 2025
+Severity: High
+
+SUMMARY:
+A new ransomware campaign dubbed "MediLock" has been observed targeting healthcare organizations worldwide. The threat actors are exploiting CVE-2025-1234, a critical vulnerability in outdated versions of popular medical record software.
+
+TECHNICAL DETAILS:
+Initial Access:
+The attackers gain initial access through phishing emails containing malicious attachments or links to compromised domains including medicalupdate.org and health-systems-update.com. These domains were registered through privacy-protected services on November 2, 2025.
+
+Infrastructure:
+Command and control servers have been identified at the following IP addresses:
+- 192.168.1.100 (likely internal testing address)
+- 203.0.113.45 (active C2)
+- 198.51.100.23 (active C2)
+- 2001:db8::ff00:42:8329 (IPv6 C2)
+
+These servers communicate with infected hosts over ports 443, 8443, and 8080.
+
+Malware Details:
+The MediLock ransomware has the following characteristics:
+- SHA256: 3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b
+- MD5: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
+- File size: 3.2MB
+- Uses AES-256 for file encryption
+- Communicates with C2 servers on port 8443
+- Drops additional payloads including keylogger and data exfiltration tools
+
+Observed Behavior:
+1. Establishes persistence through scheduled tasks and registry modifications
+2. Disables Windows Defender and other security tools
+3. Deletes shadow copies using vssadmin.exe
+4. Encrypts files with .medilock extension
+5. Drops ransom note named "YOUR_HEALTH_DATA_EMERGENCY.txt"
+
+INDICATORS OF COMPROMISE:
+- IP Addresses: 203.0.113.45, 198.51.100.23, 2001:db8::ff00:42:8329
+- Domains: medicalupdate.org, health-systems-update.com, medilock-payment.net
+- File Hashes: 
+  SHA256: 3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b
+  MD5: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
+- Malware Names: MediLock, MediLock.Dropper, MediLock.Keylogger
+- CVEs: CVE-2025-1234, CVE-2024-9876
+
+MITIGATION:
+1. Apply patches for CVE-2025-1234 and CVE-2024-9876 immediately
+2. Block communication to the identified IP addresses and domains
+3. Implement network segmentation for critical healthcare systems
+4. Update antivirus signatures to detect MediLock variants
+5. Perform regular backups and test restoration procedures`;
+      
+      document.getElementById('input-text').value = sampleText;
+    }
+    
+    async function extractEntities() {
+      const text = document.getElementById('input-text').value.trim();
+      if (!text) {
+        showError('Please enter some text to analyze');
+        return;
+      }
+      
+      const extractButton = document.getElementById('extract-button');
+      const loading = document.getElementById('loading');
+      const results = document.getElementById('results');
+      const errorMessage = document.getElementById('error-message');
+      
+      // Reset UI
+      errorMessage.style.display = 'none';
+      results.style.display = 'none';
+      extractButton.disabled = true;
+      loading.style.display = 'flex';
+      
+      try {
+        const response = await fetch('/ai/extract-entities', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ text }),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to extract entities');
+        }
+        
+        const data = await response.json();
+        displayResults(data.entities);
+        results.style.display = 'block';
+      } catch (error) {
+        showError(error.message);
+      } finally {
+        loading.style.display = 'none';
+        extractButton.disabled = false;
+      }
+    }
+    
+    function displayResults(entities) {
+      // Clear previous results
+      document.getElementById('ip-list').innerHTML = '';
+      document.getElementById('domain-list').innerHTML = '';
+      document.getElementById('cve-list').innerHTML = '';
+      document.getElementById('malware-list').innerHTML = '';
+      document.getElementById('hash-list').innerHTML = '';
+      document.getElementById('url-list').innerHTML = '';
+      document.getElementById('port-list').innerHTML = '';
+      document.getElementById('other-list').innerHTML = '';
+      
+      // Hide all sections initially
+      document.querySelectorAll('.entity-section').forEach(section => {
+        section.style.display = 'none';
+      });
+      
+      // Display IP addresses
+      if (entities.ipAddresses && entities.ipAddresses.length > 0) {
+        document.getElementById('ip-section').style.display = 'block';
+        const ipList = document.getElementById('ip-list');
+        entities.ipAddresses.forEach(ip => {
+          const li = document.createElement('li');
+          li.className = 'entity-item ip';
+          li.textContent = ip;
+          ipList.appendChild(li);
+        });
+      }
+      
+      // Display domains
+      if (entities.domains && entities.domains.length > 0) {
+        document.getElementById('domain-section').style.display = 'block';
+        const domainList = document.getElementById('domain-list');
+        entities.domains.forEach(domain => {
+          const li = document.createElement('li');
+          li.className = 'entity-item domain';
+          li.textContent = domain;
+          domainList.appendChild(li);
+        });
+      }
+      
+      // Display CVEs
+      if (entities.cves && entities.cves.length > 0) {
+        document.getElementById('cve-section').style.display = 'block';
+        const cveList = document.getElementById('cve-list');
+        entities.cves.forEach(cve => {
+          const li = document.createElement('li');
+          li.className = 'entity-item cve';
+          li.textContent = cve;
+          cveList.appendChild(li);
+        });
+      }
+      
+      // Display malware
+      if (entities.malware && entities.malware.length > 0) {
+        document.getElementById('malware-section').style.display = 'block';
+        const malwareList = document.getElementById('malware-list');
+        entities.malware.forEach(malware => {
+          const li = document.createElement('li');
+          li.className = 'entity-item malware';
+          li.textContent = malware;
+          malwareList.appendChild(li);
+        });
+      }
+      
+      // Display hashes
+      if (entities.hashes && entities.hashes.length > 0) {
+        document.getElementById('hash-section').style.display = 'block';
+        const hashList = document.getElementById('hash-list');
+        entities.hashes.forEach(hash => {
+          const li = document.createElement('li');
+          li.className = 'entity-item hash';
+          li.textContent = hash;
+          hashList.appendChild(li);
+        });
+      }
+      
+      // Display URLs
+      if (entities.urls && entities.urls.length > 0) {
+        document.getElementById('url-section').style.display = 'block';
+        const urlList = document.getElementById('url-list');
+        entities.urls.forEach(url => {
+          const li = document.createElement('li');
+          li.className = 'entity-item url';
+          li.textContent = url;
+          urlList.appendChild(li);
+        });
+      }
+      
+      // Display ports
+      if (entities.ports && entities.ports.length > 0) {
+        document.getElementById('port-section').style.display = 'block';
+        const portList = document.getElementById('port-list');
+        entities.ports.forEach(port => {
+          const li = document.createElement('li');
+          li.className = 'entity-item port';
+          li.textContent = port;
+          portList.appendChild(li);
+        });
+      }
+      
+      // Display other entities
+      if (entities.other && entities.other.length > 0) {
+        document.getElementById('other-section').style.display = 'block';
+        const otherList = document.getElementById('other-list');
+        entities.other.forEach(item => {
+          const li = document.createElement('li');
+          li.className = 'entity-item other';
+          li.textContent = `${item.type}: ${item.value}`;
+          otherList.appendChild(li);
+        });
+      }
+    }
+    
+    function showError(message) {
+      const errorElement = document.getElementById('error-message');
+      errorElement.textContent = message;
+      errorElement.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
