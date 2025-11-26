@@ -1,4 +1,4 @@
-# PLP - Final Year Project
+# PLP - Final Project
 
 A comprehensive social platform developed as a Final Year Project on PLP, featuring user authentication, community engagement, real-time features, and AI-powered content moderation.
 
@@ -34,15 +34,15 @@ A comprehensive social platform developed as a Final Year Project on PLP, featur
 
 1. **Clone the repository**:
    ```bash
-   git clone <repository-url>
-   cd <project-directory>
+   git clone https://github.com/Kyle6012/final-proj-g24.git
+   cd final-proj-g24
    npm install
    ```
 
 2. **Set up local database**:
    ```bash
    # Create PostgreSQL database
-   createdb g24sec
+   createdb g24
    ```
 
 3. **Configure environment**:
